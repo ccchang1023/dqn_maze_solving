@@ -26,12 +26,13 @@ def main():
     # m.reset()
     # print(random.choice(list(DIR)))
     
-    for _ in range(5): 
+    for _ in range(20): 
         dir = random.randint(0,3)
         # dir = random.choice(list(DIR))
-        is_valid, is_terminate, reward = m.move(dir)
-        m.show()
-        plt.show()
+        is_valid, is_terminate, reward = m.move(DIR(dir))
+        m.create_img()
+        # print("pos after move:", m.get_token_pos())
+    m.show_animate()
     
     
     
