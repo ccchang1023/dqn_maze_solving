@@ -26,8 +26,10 @@ def main():
     # m.reset()
     # print(random.choice(list(DIR)))
     
-    for _ in range(1): 
-        is_valid, is_terminate, reward = m.move(random.choice(list(DIR)))
+    for _ in range(5): 
+        dir = random.randint(0,3)
+        # dir = random.choice(list(DIR))
+        is_valid, is_terminate, reward = m.move(dir)
         m.show()
         plt.show()
     

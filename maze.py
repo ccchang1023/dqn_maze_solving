@@ -12,16 +12,16 @@ import matplotlib.pyplot as plt
 
 from enum import Enum
 
-DEFAULT_MAZE =  np.array([
-    [ 0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-    [ 0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.],
-    [ 0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.],
-    [ 1.,  1.,  0.,  1.,  1.,  0.,  1.,  0.,  0.,  0.],
-    [ 0.,  0.,  1.,  0.,  1.,  0.,  1.,  1.,  1.,  0.],
-    [ 0.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
-    [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-    [ 0.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.],
-    [ 0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.,  0.]
+DEFAULT_MAZE = np.array([
+    [ 1.,  0.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
+    [ 1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.,  1.,  1.],
+    [ 1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.,  1.,  1.],
+    [ 0.,  0.,  1.,  0.,  0.,  1.,  0.,  1.,  1.,  1.],
+    [ 1.,  1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  1.],
+    [ 1.,  1.,  0.,  1.,  0.,  1.,  1.,  1.,  1.,  1.],
+    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
+    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.],
+    [ 1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.]
 ])
 
 class DIR(Enum):
@@ -87,7 +87,7 @@ class MAZE(object):
             return (is_valid, is_terminate, reward)
         
         #If move to a block
-        if self.maze[r,c] == 1.0:
+        if self.maze[r,c] == 0.0:
             print("Block!")
             reward = -0.75
             return (is_valid, is_terminate, reward)
@@ -122,7 +122,7 @@ class MAZE(object):
         rat_row, rat_col  = self.state
         canvas[rat_row, rat_col] = 0.3   # rat cell
         canvas[nrows-1, ncols-1] = 0.9 # cheese cell
-        img = plt.imshow(canvas, interpolation='none', cmap='gray')
+        img = plt.imshow(canvas, interpolation='nearest', cmap='gray')
         return img
         
         
