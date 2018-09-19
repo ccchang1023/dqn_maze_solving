@@ -6,8 +6,6 @@ import numpy as np
 # from keras.optimizers import SGD , Adam, RMSprop
 # from keras.layers import ReLU
 # from keras.layers.advanced_activations import LeakyReLU, PReLU
-# import matplotlib as mpl
-# mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -144,26 +142,6 @@ class MAZE(object):
         ani = animation.ArtistAnimation(fig,self.img_list, interval=50, blit=True, repeat_delay=1000)
         plt.show()
         
-
-class POLICY_FUNCTION(object):        
-    def __init__(self):
-        self.model = MODEL(None)
-        
-        
-    def get_action(self, state):
-    
-    def update_weights(self):
-        
-        
-class EXPERIENCE_DB(object):
-    def __init__(self):
-        self.data = []
-    
-    def get_data(self):
-    
-    def add(self):
-    
-    def remove(self):
            
          
 
