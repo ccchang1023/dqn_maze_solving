@@ -30,7 +30,7 @@ class DIR(Enum):
     DONW = 3
 
 
-class MAZE(object):
+class Maze(object):
     def __init__(self, ):
         self.maze = DEFAULT_MAZE
         self.terminate_tag = False
@@ -79,13 +79,13 @@ class MAZE(object):
             valid_tag = False
             reward -= 0.8
             self.token_pos = pos_before_move    
-            return (valid_tag, terminate_tag, reward)
+            return (self.get_state(), reward, valid_tag, terminate_tag)
         
         if self.is_block():
             print("Block!")
             reward = -0.75
             self.token_pos = pos_before_move
-            return (valid_tag, terminate_tag, reward)
+            return (self.get_state(), reward, valid_tag, terminate_tag)
         
         if self.is_goal():
             reward = 1.
@@ -99,7 +99,14 @@ class MAZE(object):
         else:
             self.visited_set.add(tuple(self.token_pos))
        
-        return (valid_tag, terminate_tag, reward)
+        return (self.get_state(), reward, valid_tag, terminate_tag)
+    
+    #Return 1D array(nrows*ncols)  1=road, 0=block, 0.5=token
+    def get_state(self):
+        state = np.copy(self.maze)
+        r,c = self.token_pos
+        state[r][c] = 0.5
+        return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
     
     def is_block(self):
         r, c = self.token_pos
@@ -142,14 +149,7 @@ class MAZE(object):
         ani = animation.ArtistAnimation(fig,self.img_list, interval=50, blit=True, repeat_delay=1000)
         plt.show()
         
-           
-         
-
     
-# class MODEL(object):
-            
-        
-        
         
         
         
