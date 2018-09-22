@@ -34,13 +34,13 @@ class Maze(object):
     def __init__(self, ):
         self.reset()
                       
-    
     def reset(self, maze=DEFAULT_MAZE):
         self.maze = maze
         self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
         self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1.]
         self.token_pos = random.choice(self.road_list)
+        # self.token_pos = self.road_list[0]
         self.goal = [nrows-1, ncols-1]
         self.step_count = 0
         self.move_penalty = 0.
@@ -50,7 +50,7 @@ class Maze(object):
         self.img_list = []
     
     def move(self, dir):
-        valid_tag = True
+        goal_tag = False
         terminate_tag = False
         reward = 0.
         self.step_count += 1
@@ -67,37 +67,44 @@ class Maze(object):
             self.token_pos[0] += 1
             
         if not self.is_valid():
-            print("Invalid!")
-            valid_tag = False
+            # print("Invalid!")
+            terminate_tag = True
             reward -= 0.8
             self.token_pos = pos_before_move    
-            return (self.get_state(), reward, valid_tag, terminate_tag)
+            return (self.get_state(), reward, goal_tag, terminate_tag)
         
         if self.is_block():
-            print("Block!")
-            reward = -0.75
+            # print("Block!")
+            terminate_tag = True
+            reward -= 0.75
             self.token_pos = pos_before_move
-            return (self.get_state(), reward, valid_tag, terminate_tag)
+            return (self.get_state(), reward, goal_tag, terminate_tag)
         
         if self.is_goal():
             reward = 1.
-            terminate_tag = True
+            goal_tag = terminate_tag = True
         else:
             reward -= 0.04
             
         if self.is_visited():
-            print("visited!")
-            reward = -0.25
+            # print("visited!")
+            reward -= 0.25
         else:
             self.visited_set.add(tuple(self.token_pos))
        
-        return (self.get_state(), reward, valid_tag, terminate_tag)
+        return (self.get_state(), reward, goal_tag, terminate_tag)
+    
+    # def play_game(self, random_action=True):
+        # if random_action :
+            # dir = random.randint(0,3)
+            # self.maze.move(DIR(dir))
+     
     
     #Return 1D array(nrows*ncols)  1=road, 0=block, 0.5=token
     def get_state(self):
         state = np.copy(self.maze)
         r,c = self.token_pos
-        state[r][c] = 0.5
+        state[r][c] = 2.
         return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
     
     def is_block(self):

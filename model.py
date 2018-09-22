@@ -13,5 +13,6 @@ def default_model(maze_size, num_of_actions):
     model.add(Dense(maze_size))
     model.add(PReLU())
     model.add(Dense(num_of_actions))
-    model.compile(optimizer='adam', loss='mse')
+    opt = Adam(lr=0.0001)
+    model.compile(optimizer=opt, loss='mse')
     return model

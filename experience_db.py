@@ -3,7 +3,7 @@ from model import default_model
 
 
 class ExperienceDB(object):
-    def __init__(self, model=None, db_cpacity=100):
+    def __init__(self, model=None, db_cpacity=1000):
         self.model = model
         self.capacity = db_cpacity
         self.data= list()  #sets of transitions
@@ -28,15 +28,15 @@ class ExperienceDB(object):
             inputs[i] = state.flatten()  #reshape state to (nrows*ncols)
             
             #**Test this line when run successfully
-            # answers[i] = self.predict(state).flatten() #reshape to (num_of_actions)
+            # answers[i] = self.model.predict(state).flatten() #reshape to (num_of_actions)
             
             if is_terminate:
                 answers[i][action] = reward
             else:
-                qvalue_next = np.max(self.model.predict(next_state))
+                qvalue_next = np.max(self.model.predict(next_state)) #get max qvalue
                 answers[i][action] = reward + (gamma*qvalue_next)
             
-        return inputs, answers   
+        return inputs, answers
         
 
     def add(self, transition=None):
@@ -54,13 +54,6 @@ class ExperienceDB(object):
     
     def get_data_list(self):
         return self.data
-        
-        
-        
-        
-        
-        
-        
         
         
         
