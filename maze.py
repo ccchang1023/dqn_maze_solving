@@ -32,21 +32,7 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, ):
-        self.maze = DEFAULT_MAZE
-        self.terminate_tag = False
-        nrows, ncols = np.shape(self.maze)
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1.]
-        self.token_pos = random.choice(self.road_list)
-        # self.token_pos = [0,0]
-        self.goal = [nrows-1, ncols-1]
-        self.step_count = 0
-        self.move_penalty = 0.
-        self.score = 0.
-        self.visited_set = set()
-        self.visited_set.add(tuple(self.token_pos))
-        self.img_list = []
-        print(self.maze)
-        print("start from", self.token_pos)
+        self.reset()
                       
     
     def reset(self, maze=DEFAULT_MAZE):
@@ -55,7 +41,13 @@ class Maze(object):
         nrows, ncols = np.shape(self.maze)
         self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1.]
         self.token_pos = random.choice(self.road_list)
+        self.goal = [nrows-1, ncols-1]
         self.step_count = 0
+        self.move_penalty = 0.
+        self.score = 0.
+        self.visited_set = set()
+        self.visited_set.add(tuple(self.token_pos))
+        self.img_list = []
     
     def move(self, dir):
         valid_tag = True

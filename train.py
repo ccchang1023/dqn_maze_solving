@@ -5,6 +5,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from experience_db import ExperienceDB
 from model import default_model
+from dqn import DQN
+
+
+train_params={
+    'batch_size' : 5,
+    'gamma' : 0.95,
+    'epsilon' : 0.,
+    'n_epoch' : 100,
+    'batch_size' : 10,
+    'checkpoint_file' : "",
+}
 
 
 def main():
@@ -14,29 +25,13 @@ def main():
     # print(random.choice(list(DIR)))
     maze_size = m.get_state().size
     num_of_actions = 4
-    
     model = default_model(maze_size, num_of_actions)
-    experience_db = ExperienceDB(model)
+    e_db = ExperienceDB(model)
+    dqn = DQN(m, model, e_db, **train_params)
     
-    
-    for _ in range(5):
-        dir = random.randint(0,3)
-        # dir = random.choice(list(DIR))
-        s = m.get_state()
-        s_next, r, is_valid, is_terminate = m.move(DIR(dir))
-        
-        transition = [s,dir,r,s_next,is_terminate]
-        # print(np.shape(transition))
-        experience_db.add(transition)
-        
-        
-        # m.create_img()
-    
-    # experience_db.show_data()
-    batch_size = 5
-    gamma = 0.95
-    inputs, answers = experience_db.get_data(batch_size, gamma)
-
+    n_rounds = 10
+    dqn.initial_dataset(n_rounds)
+    dqn.train()
     
     
     

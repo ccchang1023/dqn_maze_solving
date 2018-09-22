@@ -34,7 +34,6 @@ class ExperienceDB(object):
                 answers[i][action] = reward
             else:
                 qvalue_next = np.max(self.model.predict(next_state))
-                print(qvalue_next)
                 answers[i][action] = reward + (gamma*qvalue_next)
             
         return inputs, answers   
@@ -46,7 +45,7 @@ class ExperienceDB(object):
         if len(self.data) > self.capacity:
             self.pop_from_head()
             
-    def pop_from_head():
+    def pop_from_head(self):
         del self.data[0]
         
     def show_data(self):

@@ -8,7 +8,18 @@ from keras.models import Sequential
 from keras.layers.core import Dense
 
 
+class test(object):
+    def __init__(self):
+        return
+    def reset(self):
+        self.a = "n"
+
+
 def main():
+
+    t = test()
+    t.reset()
+    return 
 
     m = Maze()  
     s,_,_,_ = m.move(DIR(random.randint(0,3)))
@@ -20,8 +31,7 @@ def main():
     for i,j in enumerate(np.random.choice(list, 5, replace=False)):
         print(i," ",j)
     
-    
-    
+
     
     envstate = s.reshape((1, -1))
     model = Sequential()
