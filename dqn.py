@@ -33,8 +33,8 @@ class DQN(object):
         print(self.gamma, "  ", self.epsilon)
         loss = 0.
         for i in range(self.epochs):
+            self.maze.reset()
             for _ in range(self.step_limit):
-                self.maze.reset()
                 s = self.maze.get_state()
                 
                 if random.random() > self.epsilon:
