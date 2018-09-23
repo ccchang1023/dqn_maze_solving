@@ -20,7 +20,8 @@ DEFAULT_MAZE = np.array([
     [ 1.,  1.,  0.,  1.,  0.,  1.,  1.,  1.,  1.,  1.],
     [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
     [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.],
-    [ 1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.]
+    [ 1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.],
+    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.]
 ])
 
 class DIR(Enum):
@@ -81,7 +82,7 @@ class Maze(object):
             return (self.get_state(), reward, goal_tag, terminate_tag)
         
         if self.is_goal():
-            reward = 1.
+            reward += 1.
             goal_tag = terminate_tag = True
         else:
             reward -= 0.04

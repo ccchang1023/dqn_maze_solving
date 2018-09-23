@@ -12,13 +12,13 @@ class DQN(object):
         self.epsilon = params.get('epsilon', 0.)
         self.epochs = params.get('epochs', 100)
         self.step_limit = params.get('step_limit', None)
+        self.rounds_to_test = params.get("rounds_to_test", 100)
         self.checkpoint_file = params.get('checkpoint_file', "")
         
     
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
             dir = random.randint(0,3)
-            # dir = random.choice(list(DIR))
             s = self.maze.get_state()
             s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
             transition = [s,dir,r,s_next,is_terminate]
@@ -30,13 +30,17 @@ class DQN(object):
         
         
     def train(self):
+        print(self.gamma, "  ", self.epsilon)
         loss = 0.
-        wincount = 0
         for i in range(self.epochs):
             for _ in range(self.step_limit):
+                self.maze.reset()
                 s = self.maze.get_state()
-                # dir = random.randint(0,3)
-                dir = self.get_best_action(s)
+                
+                if random.random() > self.epsilon:
+                    dir = self.get_best_action(s)
+                else:
+                    dir = np.random.randint(0,3)
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add(transition)
@@ -45,11 +49,37 @@ class DQN(object):
                 history = self.model.fit(inputs, answers, epochs=8, batch_size=16, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 if is_terminate:
-                    if is_goal:
-                        wincount += 1
                     break
-            print("Epoch:%d, step_count:%d, wincount:%d, loss:%f" %(i, self.maze.step_count, wincount, loss) )
-            wincount = 0
-            self.maze.reset()
+            
+            if i%50 == 0:
+                print("Epoch:%d, step_count:%d, loss:%f" %(i, self.maze.step_count, loss) )
+            if i%self.rounds_to_test==0:
+                self.test(self.rounds_to_test)
             
             
+    def test(self, rounds=100):
+       win_rate = 0.
+       average_reward = 0.
+       loss = 0.
+       for i in range(rounds):
+           self.maze.reset()
+           is_terminate = False
+           for j in range(self.step_limit):
+               s = self.maze.get_state()
+               dir = self.get_best_action(s)
+               _, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+               average_reward += r
+               if is_goal:
+                   win_rate += 1
+               if is_terminate:
+                   break
+       
+       inputs, answers = self.experience_db.get_data(self.batch_size)
+       loss = self.model.evaluate(inputs, answers, verbose=0)
+       win_rate = (win_rate/rounds)*100
+       average_reward /= rounds
+       output_str = str("Test Result: Loss:%f  Win_rate:%f   Average_reward:%f" %(loss, win_rate, average_reward))
+       print(output_str)
+        
+        
+        

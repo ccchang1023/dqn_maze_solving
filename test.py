@@ -11,8 +11,8 @@ from maze import Maze, DEFAULT_MAZE
 def main():
 
     m = Maze()    
-    # print(DIR(3))
-    # return
+    print(np.random.choice(DIR))
+    return
     
     while True:
         m.reset()
