@@ -28,7 +28,7 @@ class ExperienceDB(object):
             inputs[i] = state.flatten()  #reshape state to (nrows*ncols)
             
             #**Test this line when run successfully
-            # answers[i] = self.model.predict(state).flatten() #reshape to (num_of_actions)
+            answers[i] = self.model.predict(state).flatten() #reshape to (num_of_actions)
             
             if is_terminate:
                 answers[i][action] = reward

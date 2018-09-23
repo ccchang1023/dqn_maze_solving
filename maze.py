@@ -43,18 +43,18 @@ class Maze(object):
         self.token_pos = random.choice(self.road_list)
         # self.token_pos = self.road_list[0]
         self.goal = [nrows-1, ncols-1]
-        self.step_count = 0
+        self.move_count = 0
         self.reward_lower_bound = -0.5*maze.size
         self.reward_sum = 0.
-        self.visited_set = set()
-        self.visited_set.add(tuple(self.token_pos))
+        # self.visited_set = set()
+        # self.visited_set.add(tuple(self.token_pos))
         self.img_list = []
     
     def move(self, dir):
         goal_tag = False
         terminate_tag = False
         reward = 0.
-        self.step_count += 1
+        self.move_count += 1
         pos_before_move = list(self.token_pos)
         # print("before move", pos_before_move)
         
@@ -69,13 +69,13 @@ class Maze(object):
             
         if not self.is_valid():
             # print("Invalid!")
-            # terminate_tag = True
+            terminate_tag = True
             reward = -0.8
             self.token_pos = pos_before_move    
         
         elif self.is_block():
             # print("Block!")
-            # terminate_tag = True
+            terminate_tag = True
             reward = -0.75
             self.token_pos = pos_before_move
         
@@ -107,8 +107,8 @@ class Maze(object):
     def get_token_pos(self):
         return self.token_pos
         
-    def get_step_count(self):
-        return self.step_count
+    def get_move_count(self):
+        return self.move_count
      
     def get_reward_sum(self):
         return self.reward_sum
@@ -125,8 +125,8 @@ class Maze(object):
     def is_goal(self):
         return self.token_pos == self.goal
     
-    def is_visited(self):
-        return tuple(self.token_pos) in self.visited_set
+    # def is_visited(self):
+        # return tuple(self.token_pos) in self.visited_set
     
     def create_img(self):
         plt.grid(True)

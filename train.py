@@ -12,8 +12,8 @@ train_params={
     'batch_size' : 32,
     'gamma' : 0.95, #discount value when update the qvalue, 0~1
     'epsilon' : 0.1, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'epochs' : 30000,
-    'step_limit' : 150,
+    'epochs' : 40000,
+    'num_moves_limit' : 30,
     'rounds_to_test' : 100,
     'checkpoint_file' : "",
 }
@@ -31,13 +31,11 @@ def main():
     model = default_model(maze_size, num_of_actions)
     e_db = ExperienceDB(model, experience_db_capacity)
     dqn = DQN(m, model, e_db, **train_params)
-    
     n_rounds = 100
     print ("Initial dataset:", n_rounds, " rounds")
     dqn.initial_dataset(n_rounds)
     print("Start training")
     dqn.train()
-    
     
     # m.show_animate()
     

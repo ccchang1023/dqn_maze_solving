@@ -12,7 +12,7 @@ class DQN(object):
         self.gamma = params.get('gamma', 0.95)
         self.epsilon = params.get('epsilon', 0.)
         self.epochs = params.get('epochs', 100)
-        self.step_limit = params.get('step_limit', None)
+        self.num_moves_limit = params.get('num_moves_limit', None)
         self.rounds_to_test = params.get("rounds_to_test", 100)
         self.checkpoint_file = params.get('checkpoint_file', "")
         
@@ -50,7 +50,7 @@ class DQN(object):
                 # loss_sum_prev = loss_sum
                 # loss_sum = 0.
             # print("Epoch:", i)
-            for j in range(self.step_limit):
+            for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
                 if random.random() > self.epsilon:
                     dir = self.get_best_action(s)
@@ -68,7 +68,7 @@ class DQN(object):
                     break
 
             if i%50 == 0:
-                print("Epoch:%d, step_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_step_count(), 
+                print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(), 
                       self.maze.get_reward_sum(), loss))
             if i%self.rounds_to_test==0:
                 self.test(self.rounds_to_test)
@@ -80,7 +80,7 @@ class DQN(object):
        loss = 0.
        for i in range(rounds):
            self.maze.reset()
-           for j in range(self.step_limit):
+           for j in range(self.num_moves_limit):
                s = self.maze.get_state()
                dir = self.get_best_action(s)
                _, r, is_goal, is_terminate = self.maze.move(DIR(dir))
