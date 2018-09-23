@@ -13,7 +13,7 @@ train_params={
     'gamma' : 0.95, #discount value when update the qvalue, 0~1
     'epsilon' : 0.1, #epsilon greedy for choosing best move, (the prob to choice the random move)
     'epochs' : 30000,
-    'step_limit' : 300,
+    'step_limit' : 150,
     'rounds_to_test' : 100,
     'checkpoint_file' : "",
 }

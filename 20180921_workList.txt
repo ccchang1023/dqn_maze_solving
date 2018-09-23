@@ -1,0 +1,20 @@
+-Programs background setting
+-Review code:
+    -DeepLearningFlappyBird
+    -DeepLearningMaze20
+    -DeepLearningMaze40
+
+-Review code
+-Add features:
+    -Tensorboard
+    -Try different reward definitions
+   
+-Prepare the presentation for 金出教授 workshop
+    -Meeting with other members in 品川
+    -Read paper: Hyper parameters Tuning in Deep Leanring
+    
+-Coding
+    -Build DQN for maze solving problem in Keras
+    -Complete the maze part (2018/09/19)
+    -Complete the deep learning part(2018/09/21)
+        -Debug and train, tuning... (2018/09/23~)

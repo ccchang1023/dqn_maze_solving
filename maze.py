@@ -92,7 +92,7 @@ class Maze(object):
         
         self.reward_sum += reward
         
-        if self.reward_sum < self.reward_lower_bound and not goal_tag:
+        if self.reward_sum < self.reward_lower_bound:
             terminate_tag = True
         
         return (self.get_state(), reward, goal_tag, terminate_tag)

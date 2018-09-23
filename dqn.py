@@ -49,6 +49,7 @@ class DQN(object):
                     # print("Decay learning rate to:",K.get_value(self.model.optimizer.lr))
                 # loss_sum_prev = loss_sum
                 # loss_sum = 0.
+            # print("Epoch:", i)
             for j in range(self.step_limit):
                 s = self.maze.get_state()
                 if random.random() > self.epsilon:
