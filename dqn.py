@@ -1,6 +1,7 @@
 import random
 from maze import DIR
 import numpy as np
+from keras import backend as K
 
 class DQN(object):        
     def __init__(self, maze=None, model=None, experience_db=None, **params):
@@ -28,15 +29,28 @@ class DQN(object):
     def get_best_action(self, state):
         return np.argmax(self.model.predict(state)) #Return dir of max Qvalue
         
-        
+    def decay_learning_rate(self, decay=0.2):
+        lr = K.get_value(self.model.optimizer.lr)
+        K.set_value(self.model.optimizer.lr, lr*decay)
+    
     def train(self):
-        print(self.gamma, "  ", self.epsilon)
-        loss = 0.
+        loss_sum = 0.
+        loss_sum_prev = 0.
         for i in range(self.epochs):
             self.maze.reset()
-            for _ in range(self.step_limit):
+            
+            #Decay learning_rate
+            if i % 10000 == 0:
+                self.decay_learning_rate()
+            # if i%500 == 0:
+                # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
+                    # print(loss_sum_prev, "  ", loss_sum)
+                    # self.decay_learning_rate()
+                    # print("Decay learning rate to:",K.get_value(self.model.optimizer.lr))
+                # loss_sum_prev = loss_sum
+                # loss_sum = 0.
+            for j in range(self.step_limit):
                 s = self.maze.get_state()
-                
                 if random.random() > self.epsilon:
                     dir = self.get_best_action(s)
                 else:
@@ -48,11 +62,13 @@ class DQN(object):
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
                 history = self.model.fit(inputs, answers, epochs=8, batch_size=16, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
+                loss_sum += loss
                 if is_terminate:
                     break
-            
+
             if i%50 == 0:
-                print("Epoch:%d, step_count:%d, loss:%f" %(i, self.maze.step_count, loss) )
+                print("Epoch:%d, step_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_step_count(), 
+                      self.maze.get_reward_sum(), loss))
             if i%self.rounds_to_test==0:
                 self.test(self.rounds_to_test)
             
@@ -63,7 +79,6 @@ class DQN(object):
        loss = 0.
        for i in range(rounds):
            self.maze.reset()
-           is_terminate = False
            for j in range(self.step_limit):
                s = self.maze.get_state()
                dir = self.get_best_action(s)

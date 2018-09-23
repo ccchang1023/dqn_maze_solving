@@ -12,16 +12,16 @@ import matplotlib.animation as animation
 from enum import Enum
 
 DEFAULT_MAZE = np.array([
-    [ 1.,  0.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
-    [ 1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.,  1.,  1.],
-    [ 1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.,  1.,  1.],
-    [ 0.,  0.,  1.,  0.,  0.,  1.,  0.,  1.,  1.,  1.],
-    [ 1.,  1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  1.],
-    [ 1.,  1.,  0.,  1.,  0.,  1.,  1.,  1.,  1.,  1.],
-    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
-    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.],
-    [ 1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.],
-    [ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  0.,  1.,  1.]
+    [ 1,  0,  1,  1,  1,  1,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1,  0,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1,  0,  1,  1,  1,  1],
+    [ 0,  0,  1,  0,  0,  1,  0,  1,  1,  1],
+    [ 1,  1,  0,  1,  0,  1,  0,  0,  0,  1],
+    [ 1,  1,  0,  1,  0,  1,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1,  1,  1,  0,  0,  0],
+    [ 1,  0,  0,  0,  0,  0,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1,  1,  1,  0,  1,  1]
 ])
 
 class DIR(Enum):
@@ -39,13 +39,13 @@ class Maze(object):
         self.maze = maze
         self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1.]
+        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
         self.token_pos = random.choice(self.road_list)
         # self.token_pos = self.road_list[0]
         self.goal = [nrows-1, ncols-1]
         self.step_count = 0
-        self.move_penalty = 0.
-        self.score = 0.
+        self.reward_lower_bound = -0.5*maze.size
+        self.reward_sum = 0.
         self.visited_set = set()
         self.visited_set.add(tuple(self.token_pos))
         self.img_list = []
@@ -69,48 +69,53 @@ class Maze(object):
             
         if not self.is_valid():
             # print("Invalid!")
-            terminate_tag = True
-            reward -= 0.8
+            # terminate_tag = True
+            reward = -0.8
             self.token_pos = pos_before_move    
-            return (self.get_state(), reward, goal_tag, terminate_tag)
         
-        if self.is_block():
+        elif self.is_block():
             # print("Block!")
-            terminate_tag = True
-            reward -= 0.75
+            # terminate_tag = True
+            reward = -0.75
             self.token_pos = pos_before_move
-            return (self.get_state(), reward, goal_tag, terminate_tag)
         
-        if self.is_goal():
-            reward += 1.
+        elif self.is_goal():
+            reward = 1.
             goal_tag = terminate_tag = True
         else:
             reward -= 0.04
             
-        if self.is_visited():
-            # print("visited!")
-            reward -= 0.25
-        else:
-            self.visited_set.add(tuple(self.token_pos))
-       
+        # if self.is_visited():
+        #     reward -= 0.25
+        # else:
+        #     self.visited_set.add(tuple(self.token_pos))
+        
+        self.reward_sum += reward
+        
+        if self.reward_sum < self.reward_lower_bound and not goal_tag:
+            terminate_tag = True
+        
         return (self.get_state(), reward, goal_tag, terminate_tag)
     
-    # def play_game(self, random_action=True):
-        # if random_action :
-            # dir = random.randint(0,3)
-            # self.maze.move(DIR(dir))
-     
-    
-    #Return 1D array(nrows*ncols)  1=road, 0=block, 0.5=token
+    #Return 1D array(nrows*ncols)  1=road, 0=block, 2=token
     def get_state(self):
         state = np.copy(self.maze)
         r,c = self.token_pos
-        state[r][c] = 2.
+        state[r][c] = 2
         return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
     
+    def get_token_pos(self):
+        return self.token_pos
+        
+    def get_step_count(self):
+        return self.step_count
+     
+    def get_reward_sum(self):
+        return self.reward_sum
+        
     def is_block(self):
         r, c = self.token_pos
-        return self.maze[r,c] == 0.
+        return self.maze[r,c] == 0
         
     def is_valid(self):
         r, c = self.token_pos
@@ -122,9 +127,6 @@ class Maze(object):
     
     def is_visited(self):
         return tuple(self.token_pos) in self.visited_set
-    
-    def get_token_pos(self):
-        return self.token_pos
     
     def create_img(self):
         plt.grid(True)
