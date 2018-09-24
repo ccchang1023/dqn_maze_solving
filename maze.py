@@ -19,10 +19,25 @@ DEFAULT_MAZE = np.array([
     [ 1,  1,  0,  1,  0,  1,  0,  0,  0,  1],
     [ 1,  1,  0,  1,  0,  1,  1,  1,  1,  1],
     [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [ 1,  1,  1,  1,  1,  1,  1,  0,  0,  0],
+    [ 1,  1,  1,  1,  1,  1,  0,  0,  0,  0],
     [ 1,  0,  0,  0,  0,  0,  1,  1,  1,  1],
-    [ 1,  1,  1,  1,  1,  1,  1,  0,  1,  1]
+    [ 1,  1,  1,  1,  1,  1,  1,  0,  1,  3]
 ])
+
+DEFAULT_MAZE_ANSWER = np.array([
+    [ 40,  0,  36,  35,  34,  33, 32,  31,  30,  29],
+    [ 39,  38, 37,  36,  35,  0,  31,  30,  29,  28],
+    [ 40,  39, 38,  37,  36,  0,  30,  29,  28,  27],
+    [ 0,   0,  39,  0,   0,   22,  0,  28,  27,  26],
+    [ 16,  17,  0,  19,  0,   21,  0,  0,   0,   25],
+    [ 15,  16,  0,  18,  0,   20,  21, 22,  23,  24],
+    [ 14,  15,  16, 17,  18,  19,  20, 21,  22,  23],
+    [ 13,  14,  15, 16,  17,  18,  0,   0,   0,   0],
+    [ 12,  0,   0,   0,   0,   0,  4,   3,   2,   1],
+    [ 11,  10,  9,   8,   7,   6,  5,   0,   1,   0]
+]) 
+
+
 
 class DIR(Enum):
     LEFT = 0
@@ -136,15 +151,14 @@ class Maze(object):
         ax.set_yticks(np.arange(0.5, ncols, 1))
         ax.set_xticklabels([])
         ax.set_yticklabels([])
-        canvas = np.copy(self.maze)
-        for row,col in self.visited_set:
-            canvas[row,col] = 0.6
+        canvas = np.copy(self.maze).astype(float)
+        # for row,col in self.visited_set:
+            # canvas[row,col] = 0.6
         rat_row, rat_col  = self.token_pos
-        canvas[rat_row, rat_col] = 0.3   # rat cell
-        canvas[nrows-1, ncols-1] = 0.9 # cheese cell
-        img = plt.imshow(canvas, cmap='gray', animated=True)
+        canvas[rat_row, rat_col] = 0.3   # token cell
+        canvas[nrows-1, ncols-1] = 0.9 # goal cell
+        img = plt.imshow(canvas, interpolation='None', cmap='gray', animated=False)
         self.img_list.append([img])
-        print(len(self.img_list))
         
     def show_animate(self):
         fig = plt.figure()

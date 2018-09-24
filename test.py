@@ -11,7 +11,13 @@ from maze import Maze, DEFAULT_MAZE
 def main():
 
     m = Maze()    
-    print(np.random.choice(DIR))
+    m.reset()
+    for [x,y] in m.road_list:
+        print(x, " ", y)
+    
+    # m.create_img()
+    # plt.show()
+    
     return
     
     while True:
