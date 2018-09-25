@@ -59,6 +59,7 @@ class Maze(object):
         # self.token_pos = self.road_list[0]
         self.goal = [nrows-1, ncols-1]
         self.move_count = 0
+        self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_lower_bound = -0.5*maze.size
         self.reward_sum = 0.
         # self.visited_set = set()
@@ -125,9 +126,19 @@ class Maze(object):
     def get_move_count(self):
         return self.move_count
      
+    def get_optimal_move_count(self):
+        return self.optimal_move_count
+     
     def get_reward_sum(self):
         return self.reward_sum
-        
+    
+    def get_optimal_solution_diff(self):
+        move_count = self.get_move_count()
+        optimal_move_count = self.get_optimal_move_count()
+        diff = move_count - optimal_move_count
+        return diff
+        # print("Moves:%d Answer:%d Diff:%d" %(move_count, optimal_move_count, diff))
+    
     def is_block(self):
         r, c = self.token_pos
         return self.maze[r,c] == 0

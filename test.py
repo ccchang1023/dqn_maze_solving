@@ -11,29 +11,26 @@ from maze import Maze, DEFAULT_MAZE
 def main():
 
     m = Maze()    
-    m.reset()
-    for [x,y] in m.road_list:
-        print(x, " ", y)
-    
+       
     # m.create_img()
     # plt.show()
     
-    return
-    
     while True:
         m.reset()
-        print(m.get_state().reshape(9,10))
+        print(m.get_state().reshape(10,10))
         for i in range(300):
-            dir = input("Enter dir:")
-            os.system('clear')
+            # dir = input("Enter dir:")
+            # os.system('clear')
+            dir = np.random.randint(0,3)
             s ,r , gTag, tTag = m.move(DIR(dir))
             print("reward:%f, valid_tag:%d, terminal_tag:%d" %(r, gTag, tTag))
-            print("TOken:", m.get_token_pos())
-            print(m.get_state().reshape(9,10))
+            # print(m.get_state().reshape(10,10))
             if tTag:
                 print("Dead!")
                 break
-            
+        print(m.get_state().reshape(10,10))
+        m.show_optimal_solution_diff()
+        return
             
     # m = Maze()  
     # s,_,_,_ = m.move(DIR(random.randint(0,3)))

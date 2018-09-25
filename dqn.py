@@ -78,6 +78,8 @@ class DQN(object):
        win_rate = 0.
        average_reward = 0.
        loss = 0.
+       optimal_rate = 0.
+       diff_count_sum = 0
        for i in range(rounds):
            self.maze.reset()
            for j in range(self.num_moves_limit):
@@ -87,15 +89,23 @@ class DQN(object):
                average_reward += r
                if is_goal:
                    win_rate += 1
+                   diff_count = self.maze.get_optimal_solution_diff()
+                   if diff_count == 0:
+                       optimal_rate += 1
+                   else:
+                       diff_count_sum += diff_count
+                       
                if is_terminate:
                    break
        
        inputs, answers = self.experience_db.get_data(self.batch_size)
        loss = self.model.evaluate(inputs, answers, verbose=0)
        win_rate = (win_rate/rounds)*100
+       optimal_rate = (optimal_rate/rounds)*100
        average_reward /= rounds
-       output_str = str("Test Result: Loss:%f  Win_rate:%f   Average_reward:%f" %(loss, win_rate, average_reward))
+       output_str = str("Test Result: Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
+                        "Diff_count_sum:%d      Average_reward:%.4f"
+                        %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
        print(output_str)
-        
         
         
