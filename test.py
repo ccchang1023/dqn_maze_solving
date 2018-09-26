@@ -24,8 +24,8 @@ def main():
             # dir = np.random.randint(0,3)
             s ,r , gTag, tTag = m.move(DIR(int(dir)))
             print("reward:%f, valid_tag:%d, terminal_tag:%d" %(r, gTag, tTag))
-            m.show_maze()
-            print(m.get_state())
+            # m.show_maze()
+            print(m.get_state().reshape(10,10))
             if tTag:
                 print("Dead!")
                 break

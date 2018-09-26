@@ -64,7 +64,10 @@ class DQN(object):
                 history = self.model.fit(inputs, answers, epochs=8, batch_size=16, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
-                if is_terminate:
+                
+                #Even the game return terminate, keep training until reach goal or surpass lower bound 
+                #(but update reward will only be r, check in get_data function)
+                if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
             if i%50 == 0:
