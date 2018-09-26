@@ -10,26 +10,27 @@ from maze import Maze, DEFAULT_MAZE
 
 def main():
 
-    m = Maze()    
-       
+    m = Maze()
+
     # m.create_img()
     # plt.show()
     
     while True:
         m.reset()
-        print(m.get_state().reshape(10,10))
+        m.show_maze()
         for i in range(300):
-            # dir = input("Enter dir:")
-            # os.system('clear')
-            dir = np.random.randint(0,3)
-            s ,r , gTag, tTag = m.move(DIR(dir))
+            dir = input("Enter dir:")
+            os.system('clear')
+            # dir = np.random.randint(0,3)
+            s ,r , gTag, tTag = m.move(DIR(int(dir)))
             print("reward:%f, valid_tag:%d, terminal_tag:%d" %(r, gTag, tTag))
-            # print(m.get_state().reshape(10,10))
+            m.show_maze()
+            print(m.get_state())
             if tTag:
                 print("Dead!")
                 break
-        print(m.get_state().reshape(10,10))
-        m.show_optimal_solution_diff()
+        # print(m.get_state().reshape(10,10))
+        m.get_optimal_solution_diff()
         return
             
     # m = Maze()  

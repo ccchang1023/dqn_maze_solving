@@ -8,14 +8,14 @@ class DQN(object):
         self.maze = maze
         self.model = model
         self.experience_db = experience_db
-        self.batch_size = params.get('batch_size', 10)
+        self.batch_size = params.get('batch_size', 32)
         self.gamma = params.get('gamma', 0.95)
         self.epsilon = params.get('epsilon', 0.)
         self.epochs = params.get('epochs', 100)
         self.num_moves_limit = params.get('num_moves_limit', None)
         self.rounds_to_test = params.get("rounds_to_test", 100)
-        self.checkpoint_file = params.get('checkpoint_file', "")
-        
+        self.saved_model_path = params.get('saved_model_path', "")
+        self.rounds_to_save_model = params.get('rounds_to_save_model', 0)
     
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
@@ -72,7 +72,9 @@ class DQN(object):
                       self.maze.get_reward_sum(), loss))
             if i%self.rounds_to_test==0:
                 self.test(self.rounds_to_test)
-            
+
+            if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
+                self.model.save(self.saved_model_path)
             
     def test(self, rounds=100):
        win_rate = 0.
@@ -98,7 +100,7 @@ class DQN(object):
                if is_terminate:
                    break
        
-       inputs, answers = self.experience_db.get_data(self.batch_size)
+       inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
        loss = self.model.evaluate(inputs, answers, verbose=0)
        win_rate = (win_rate/rounds)*100
        optimal_rate = (optimal_rate/rounds)*100

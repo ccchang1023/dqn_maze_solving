@@ -23,6 +23,7 @@ class ExperienceDB(object):
         num_of_actions = self.model.output_shape[-1]
         inputs = np.zeros((batch_size, state_size))
         answers = np.zeros((batch_size, num_of_actions))
+        # print ("Gamma:", gamma)
         for i,j in enumerate(np.random.choice(len(self.data), batch_size, replace=False)):
             state, action, reward, next_state, is_terminate = self.data[j]
             inputs[i] = state.flatten()  #reshape state to (nrows*ncols)
