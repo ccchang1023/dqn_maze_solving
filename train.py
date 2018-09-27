@@ -4,7 +4,7 @@ from maze import Maze, DIR
 import numpy as np
 import matplotlib.pyplot as plt
 from experience_db import ExperienceDB
-from model import default_model, restore_model
+from model import default_model, restore_model, conv2d_model
 from dqn import DQN
 
 
@@ -26,8 +26,15 @@ experience_db_capacity = 1000
 def main():
     
     m = Maze()
-    state_size = m.get_state().size
-    model = default_model(state_size, num_of_actions)
+    
+    #Dense model
+    # state_size = m.get_state().size
+    # model = default_model(state_size, num_of_actions)
+    
+    #Conv2d model
+    state_shape = m.get_state().shape
+    model = conv2d_model(state_shape, num_of_actions)
+    
     # model = restore_model('./saved_model/test.h5')
     e_db = ExperienceDB(model, experience_db_capacity)
     dqn = DQN(m, model, e_db, **train_params)

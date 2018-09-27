@@ -37,6 +37,7 @@ class DQN(object):
         loss_sum = 0.
         loss_sum_prev = 0.
         for i in range(self.epochs):
+            print("Epoch:%d" %(i))
             self.maze.reset()
             
             #Decay learning_rate

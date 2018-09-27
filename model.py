@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.activations import relu
 from keras.models import load_model
 from keras.optimizers import SGD, Adam, RMSprop
@@ -20,3 +20,40 @@ def default_model(state_size, num_of_actions):
     opt = Adam(lr=1e-4, epsilon=1e-8)
     model.compile(optimizer=opt, loss='mse')
     return model
+ 
+def conv2d_model(state_shape, num_of_actions):
+    batch, rows, cols, channels = state_shape
+    model = Sequential()
+    model.add(Conv2D(filters=32, kernel_size=(3,3), input_shape=(rows, cols, channels)))
+    model.add(PReLU())
+    model.add(Conv2D(filters=32, kernel_size=(3,3)))
+    model.add(PReLU())
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.1))
+    
+    model.add(Flatten())
+    model.add(Dense(128))
+    model.add(PReLU())
+    model.add(Dropout(0.1))
+    model.add(Dense(num_of_actions))
+    model.add(PReLU())
+    
+    opt = Adam(lr=1e-4, epsilon=1e-8)
+    model.compile(optimizer=opt, loss='mse')
+    return model
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

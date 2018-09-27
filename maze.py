@@ -137,14 +137,22 @@ class Maze(object):
         # return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
+        # state = np.copy(self.maze)
+        # for r,c in self.visited_set:
+            # state[r][c] = 4
+        # r,c = self.token_pos
+        # state[r][c] = 2
+        # state = np.append(state, self.move_count)
+        # state = np.append(state, self.reward_sum).astype(float)
+        # return state.reshape(1,-1)
+        
+        #State5: For conv2d, maze+valid, return shape=(1,row, col, 1)
         state = np.copy(self.maze)
         for r,c in self.visited_set:
             state[r][c] = 4
         r,c = self.token_pos
-        state[r][c] = 2
-        state = np.append(state, self.move_count)
-        state = np.append(state, self.reward_sum).astype(float)
-        return state.reshape(1,-1)
+        state[r][c] = 2        
+        return state.reshape(1,state.shape[0],state.shape[1],1)
         
         
     def get_token_pos(self):
