@@ -94,7 +94,7 @@ class Maze(object):
         elif self.is_block():
             # print("Block!")
             terminate_tag = True
-            reward = -0.8
+            reward = -0.75
             self.token_pos = pos_before_move
 
         elif self.is_goal():
@@ -107,7 +107,7 @@ class Maze(object):
         else:
             # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             self.visited_set.add(tuple(self.token_pos))
-            reward = -0.04
+            reward = +0.04
 
         self.reward_sum += reward
         
@@ -120,12 +120,12 @@ class Maze(object):
     def get_state(self):
 
         #state1: only maze
-        # state = np.copy(self.maze)
-        # for r,c in visited_set:
-            # state[r][c] = 4
-        # r,c = self.token_pos
-        # state[r][c] = 2
-        # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
+        state = np.copy(self.maze)
+        for r,c in self.visited_set:
+            state[r][c] = 4
+        r,c = self.token_pos
+        state[r][c] = 2
+        return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
         #state2: visited_list + token_pos
         # return (np.append(self.visited_list, self.token_pos)).reshape(1,-1)
@@ -137,15 +137,18 @@ class Maze(object):
         # return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
-        state = np.copy(self.maze)
-        for r,c in self.visited_set:
-            state[r][c] = 4
-        r,c = self.token_pos
-        state[r][c] = 2
-        state = np.append(state, self.move_count)
-        state = np.append(state, self.reward_sum).astype(float)
-        return state.reshape(1,-1)
-        
+        # state = np.copy(self.maze)
+        # for r,c in self.visited_set:
+        #     state[r][c] = 4
+        # r,c = self.token_pos
+        # state[r][c] = 2
+        # state = np.append(state, self.move_count)
+        # state = np.append(state, self.reward_sum).astype(float)
+        # return state.reshape(1,-1)
+
+        #state5: token_pos(x,y) + move_count
+        # return (np.append(np.array(self.token_pos), self.move_count)).reshape(1,-1)
+
         
     def get_token_pos(self):
         return self.token_pos
