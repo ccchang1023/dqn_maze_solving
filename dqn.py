@@ -42,8 +42,8 @@ class DQN(object):
             # print("Epoch:%d" %(i))
 
             #Decay learning_rate
-            if i % 10000 == 0:
-                self.decay_learning_rate()
+            # if i % 10000 == 0:
+            #     self.decay_learning_rate()
             # if i%500 == 0:
                 # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
                     # print(loss_sum_prev, "  ", loss_sum)
@@ -65,7 +65,7 @@ class DQN(object):
                 self.experience_db.add(transition)
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                history = self.model.fit(inputs, answers, epochs=8, batch_size=16, verbose=0)
+                history = self.model.fit(inputs, answers, epochs=8, batch_size =16, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
 
@@ -76,6 +76,7 @@ class DQN(object):
                     break
                 elif is_terminate:
                     keep_playing = True
+
 
             # if i%100 == 0:
             #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),
@@ -139,6 +140,7 @@ class DQN(object):
        average_reward /= rounds
        output_str = str(" Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
                         "Diff_count_sum:%d      Average_reward:%.4f"
+
                         %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
        print(output_str)
         

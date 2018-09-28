@@ -16,6 +16,8 @@ def default_model(state_size, num_of_actions):
     model.add(PReLU())
     model.add(Dense(state_size))
     model.add(PReLU())
+    model.add(Dense(state_size))
+    model.add(PReLU())
     model.add(Dense(num_of_actions))
     opt = Adam(lr=1e-4, epsilon=1e-8)
     model.compile(optimizer=opt, loss='mse')

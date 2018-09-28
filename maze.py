@@ -94,7 +94,7 @@ class Maze(object):
         elif self.is_block():
             # print("Block!")
             terminate_tag = True
-            reward = -0.8
+            reward = -0.75
             self.token_pos = pos_before_move
 
         elif self.is_goal():
@@ -121,12 +121,12 @@ class Maze(object):
     def get_state(self):
 
         #state1: only maze
-        # state = np.copy(self.maze)
-        # for r,c in visited_set:
-            # state[r][c] = 4
-        # r,c = self.token_pos
-        # state[r][c] = 2
-        # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
+        state = np.copy(self.maze)
+        for r,c in self.visited_set:
+            state[r][c] = 4
+        r,c = self.token_pos
+        state[r][c] = 2
+        return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
         #state2: visited_list + token_pos
         # return (np.append(self.visited_list, self.token_pos)).reshape(1,-1)
@@ -146,7 +146,7 @@ class Maze(object):
         # state = np.append(state, self.move_count)
         # state = np.append(state, self.reward_sum).astype(float)
         # return state.reshape(1,-1)
-        
+
         #State5: For conv2d, maze+valid, return shape=(1,row, col, 1)
         state = np.copy(self.maze)
         for r,c in self.visited_set:
@@ -154,7 +154,7 @@ class Maze(object):
         r,c = self.token_pos
         state[r][c] = 2
         return state.reshape(1,state.shape[0],state.shape[1],1)
-        
+
         
     def get_token_pos(self):
         return self.token_pos
