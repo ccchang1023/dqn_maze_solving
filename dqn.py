@@ -8,6 +8,7 @@ from keras import backend as K
 
 class DQN(object):        
     def __init__(self, **train_params):
+        print(train_params)
         #####Training parameters#####
         self.batch_size = train_params.get('batch_size', 32)
         self.learning_rate  = train_params.get('learning_rate', 1e-4)
@@ -47,7 +48,7 @@ class DQN(object):
         loss_sum = 0.
         loss_sum_prev = 0.
         for i in range(self.epochs):
-            self.maze.reset()
+            self.maze.reset(fix_goal=False)
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
@@ -106,7 +107,7 @@ class DQN(object):
        test_answer = list()
 
        for i in range(rounds):
-           self.maze.reset()
+           self.maze.reset(fix_goal=True)
            for j in range(self.num_moves_limit):
                s = self.maze.get_state()
                # dir = self.get_best_action(s)

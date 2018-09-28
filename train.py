@@ -12,8 +12,8 @@ train_params={
     'rounds_to_test' : 100,
     'saved_model_path' : "./saved_model/test.h5",
     'rounds_to_save_model' : 20000,
-    'maze_reward_lower_bound' : -1.5,
-    'db_capacity': 1000,
+    'maze_reward_lower_bound' : -3.,
+    'db_capacity': 2000,
     'Model_type': "dense",
 }
 

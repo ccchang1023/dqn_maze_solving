@@ -53,13 +53,17 @@ class Maze(object):
         self.reward_lower_bound = lower_bound
         self.reset()
                       
-    def reset(self):
+    def reset(self, fix_goal=True):
         self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
         self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
         self.token_pos = random.choice(self.road_list)
-        # self.token_pos = self.road_list[0]
-        self.goal = [nrows-1, ncols-1]
+        self.goal = [-1,-1]
+        if fix_goal:
+            self.goal = [nrows-1, ncols-1]
+        else:
+            while self.goal != self.token_pos:
+                self.goal = random.choice(self.road_list)
         self.move_count = 0
         self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
@@ -72,7 +76,6 @@ class Maze(object):
     def move(self, dir):
         goal_tag = False
         terminate_tag = False
-        reward = 0.
         self.move_count += 1
         pos_before_move = list(self.token_pos)
         # print("before move", pos_before_move)
@@ -89,13 +92,13 @@ class Maze(object):
         if not self.is_valid():
             # print("Invalid!")
             terminate_tag = True
-            reward = -1
+            reward = -0.8
             self.token_pos = pos_before_move    
         
         elif self.is_block():
             # print("Block!")
             terminate_tag = True
-            reward = -1
+            reward = -0.8
             self.token_pos = pos_before_move
 
         elif self.is_goal():
@@ -113,8 +116,8 @@ class Maze(object):
 
         self.reward_sum += reward
         
-        if self.reward_sum < self.reward_lower_bound:
-            terminate_tag = True
+        # if self.reward_sum < self.reward_lower_bound:
+        #     terminate_tag = True
         
         return (self.get_state(), reward, goal_tag, terminate_tag)
     
