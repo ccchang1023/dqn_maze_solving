@@ -48,12 +48,13 @@ class DQN(object):
         loss_sum = 0.
         loss_sum_prev = 0.
         for i in range(self.epochs):
-            self.maze.reset(fix_goal=False)
+            self.maze.reset()
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 10000 == 0:
+            if i % 20000 == 0 and i!=0 :
                 self.decay_learning_rate()
+                print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
             # if i%500 == 0:
                 # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
                     # print(loss_sum_prev, "  ", loss_sum)
@@ -107,7 +108,7 @@ class DQN(object):
        test_answer = list()
 
        for i in range(rounds):
-           self.maze.reset(fix_goal=True)
+           self.maze.reset()
            for j in range(self.num_moves_limit):
                s = self.maze.get_state()
                # dir = self.get_best_action(s)

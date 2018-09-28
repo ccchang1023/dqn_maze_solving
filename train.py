@@ -7,7 +7,7 @@ train_params={
     'gamma' : 1., #discount value when update the qvalue, 0~1
     'epsilon' : 0.05, #epsilon greedy for choosing best move, (the prob to choice the random move)
     'learning_rate' : 1e-4,
-    'epochs' : 40000,
+    'epochs' : 100000,
     'num_moves_limit' : 500,
     'rounds_to_test' : 100,
     'saved_model_path' : "./saved_model/test.h5",
