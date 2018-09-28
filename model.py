@@ -26,14 +26,14 @@ def conv2d_model(state_shape, num_of_actions):
     model = Sequential()
     model.add(Conv2D(filters=32, kernel_size=(3,3), padding='valid', input_shape=(rows, cols, channels)))
     model.add(PReLU())
-    # model.add(Conv2D(filters=32, kernel_size=(3,3), padding='same'))
-    # model.add(PReLU())
-    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Conv2D(filters=32, kernel_size=(3,3), padding='valid'))
+    model.add(PReLU())
+    # model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.1))
 
     model.add(Conv2D(filters=32, kernel_size=(3, 3), padding='valid'))
     model.add(PReLU())
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    # model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.1))
 
 
@@ -44,7 +44,7 @@ def conv2d_model(state_shape, num_of_actions):
     model.add(Dense(num_of_actions))
     model.add(PReLU())
     
-    opt = Adam(lr=5e-4, epsilon=1e-8)
+    opt = Adam(lr=1e-4, epsilon=1e-8)
     model.compile(optimizer=opt, loss='mse')
     return model
     

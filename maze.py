@@ -104,10 +104,11 @@ class Maze(object):
         elif self.is_visited(self.token_pos[0],self.token_pos[1]):
             # print("is_visited!")
             reward = -0.25
+
         else:
             # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             self.visited_set.add(tuple(self.token_pos))
-            reward = -0.04
+            reward = -0.01
 
         self.reward_sum += reward
         
@@ -151,7 +152,7 @@ class Maze(object):
         for r,c in self.visited_set:
             state[r][c] = 4
         r,c = self.token_pos
-        state[r][c] = 2        
+        state[r][c] = 2
         return state.reshape(1,state.shape[0],state.shape[1],1)
         
         

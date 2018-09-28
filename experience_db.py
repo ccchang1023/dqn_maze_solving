@@ -7,17 +7,16 @@ class ExperienceDB(object):
         self.model = model
         self.capacity = db_cpacity
         self.data= list()  #sets of transitions
-    
+        self.goal_data = list()
     """
     Return input, answer
     input : np.array(batch_size, nrows*ncols)
     answer: np.array(batch_size, num_of_actions)
     keras.model.fit(input, answer, ...)
     """  
-    def get_data(self, batch_size=None, gamma=0.95):
+    def get_data(self, batch_size=None, gamma=0.95, goal_data_ratio=0.5):
         if len(self.data) == 0:
             return None, None
-            
         #transitions definition : [state, action, reward, next_state, is_terminate]
         state_size = self.data[0][0].size #Get 1D state size
         num_of_actions = self.model.output_shape[-1]
