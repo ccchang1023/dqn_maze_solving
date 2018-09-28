@@ -21,7 +21,7 @@ DEFAULT_MAZE = np.array([
     [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
     [ 1,  1,  1,  1,  1,  1,  0,  0,  0,  0],
     [ 1,  0,  0,  0,  0,  0,  1,  1,  1,  1],
-    [ 1,  1,  1,  1,  1,  1,  1,  0,  1,  3]
+    [ 1,  1,  1,  1,  1,  1,  1,  0,  1,  1]
 ])
 
 DEFAULT_MAZE_ANSWER = np.array([
@@ -47,11 +47,13 @@ class DIR(Enum):
 
 
 class Maze(object):
-    def __init__(self, ):
+    def __init__(self, maze=DEFAULT_MAZE, num_of_actions=4, lower_bound=None):
+        self.maze = maze
+        self.num_of_actions = num_of_actions
+        self.reward_lower_bound = lower_bound
         self.reset()
                       
-    def reset(self, maze=DEFAULT_MAZE):
-        self.maze = maze
+    def reset(self):
         self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
         self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
@@ -60,12 +62,11 @@ class Maze(object):
         self.goal = [nrows-1, ncols-1]
         self.move_count = 0
         self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
-        self.reward_lower_bound = -0.03*maze.size
         self.reward_sum = 0.
-        # self.visited_list = np.zeros(np.shape(self.maze))
-        # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
-        self.visited_set = set()
-        self.visited_set.add(tuple(self.token_pos))
+        self.visited_list = np.zeros(np.shape(self.maze))
+        self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
+        # self.visited_set = set()
+        # self.visited_set.add(tuple(self.token_pos))
         self.img_list = []
     
     def move(self, dir):
@@ -88,13 +89,13 @@ class Maze(object):
         if not self.is_valid():
             # print("Invalid!")
             terminate_tag = True
-            reward = -0.8
+            reward = -1
             self.token_pos = pos_before_move    
         
         elif self.is_block():
             # print("Block!")
             terminate_tag = True
-            reward = -0.75
+            reward = -1
             self.token_pos = pos_before_move
 
         elif self.is_goal():
@@ -106,9 +107,9 @@ class Maze(object):
             reward = -0.25
 
         else:
-            # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
-            self.visited_set.add(tuple(self.token_pos))
-            reward = -0.01
+            self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+            # self.visited_set.add(tuple(self.token_pos))
+            reward = -0.04
 
         self.reward_sum += reward
         
@@ -121,21 +122,20 @@ class Maze(object):
     def get_state(self):
 
         #state1: only maze
-        state = np.copy(self.maze)
-        for r,c in self.visited_set:
-            state[r][c] = 4
-        r,c = self.token_pos
-        state[r][c] = 2
-        return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
+        # state = np.copy(self.maze)
+        # for r,c in self.visited_set:
+        #     state[r][c] = 4
+        # r,c = self.token_pos
+        # state[r][c] = 2
+        # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
         #state2: visited_list + token_pos
         # return (np.append(self.visited_list, self.token_pos)).reshape(1,-1)
 
-        #state3: maze+visited_list
-        # state = np.copy(self.maze)
-        # r, c = self.token_pos
-        # state[r][c] = 2
-        # return (np.append(state, self.visited_list)).reshape(1,-1)
+        #state3: token_pos + goal + maze +visited_list
+        state = np.append(self.token_pos, self.goal)
+        # state = np.append(state, np.copy(self.maze))
+        return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
         # state = np.copy(self.maze)
@@ -148,14 +148,16 @@ class Maze(object):
         # return state.reshape(1,-1)
 
         #State5: For conv2d, maze+valid, return shape=(1,row, col, 1)
-        state = np.copy(self.maze)
-        for r,c in self.visited_set:
-            state[r][c] = 4
-        r,c = self.token_pos
-        state[r][c] = 2
-        return state.reshape(1,state.shape[0],state.shape[1],1)
+        # state = np.copy(self.maze)
+        # for r,c in self.visited_set:
+        #     state[r][c] = 4
+        # r,c = self.token_pos
+        # state[r][c] = 2
+        # return state.reshape(1,state.shape[0],state.shape[1],1)
 
-        
+    def get_num_of_actions(self):
+        return self.num_of_actions
+
     def get_token_pos(self):
         return self.token_pos
         
@@ -191,14 +193,15 @@ class Maze(object):
         return self.token_pos == self.goal
     
     def is_visited(self, x, y):
-        # return (self.visited_list[x,y]==1)
-        return tuple(self.token_pos) in self.visited_set
+        return (self.visited_list[x,y]==1)
+        # return tuple(self.token_pos) in self.visited_set
 
     def show_maze(self):
         x,y = self.token_pos
         m = np.copy(self.maze)
         m[x][y] = 2
         print(m)
+
 
     def create_img(self):
         plt.grid(True)

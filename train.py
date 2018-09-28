@@ -1,10 +1,4 @@
 from __future__ import print_function
-import os, sys, time, datetime, json, random
-from maze import Maze, DIR
-import numpy as np
-import matplotlib.pyplot as plt
-from experience_db import ExperienceDB
-from model import default_model, restore_model, conv2d_model
 from dqn import DQN
 
 
@@ -17,28 +11,16 @@ train_params={
     'num_moves_limit' : 500,
     'rounds_to_test' : 100,
     'saved_model_path' : "./saved_model/test.h5",
-    'rounds_to_save_model' : 20000
+    'rounds_to_save_model' : 20000,
+    'maze_reward_lower_bound' : -1.5,
+    'db_capacity': 1000,
+    'Model_type': "dense",
 }
 
-num_of_actions = 4
-experience_db_capacity = 1000
-
-
 def main():
-    
-    m = Maze()
-    
-    #Dense model
-    # state_size = m.get_state().size
-    # model = default_model(state_size, num_of_actions)
-    
-    #Conv2d model
-    state_shape = m.get_state().shape
-    model = conv2d_model(state_shape, num_of_actions)
-    
+
     # model = restore_model('./saved_model/test.h5')
-    e_db = ExperienceDB(model, experience_db_capacity)
-    dqn = DQN(m, model, e_db, **train_params)
+    dqn = DQN(**train_params)
     initial_rounds = 100
     print ("Initial dataset:", initial_rounds, " rounds")
     dqn.initial_dataset(initial_rounds)

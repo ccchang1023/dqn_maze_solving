@@ -27,7 +27,6 @@ class ExperienceDB(object):
             state, action, reward, next_state, is_terminate = self.data[j]
             inputs[i] = state.flatten()  #reshape state to (nrows*ncols)
             
-            #**Test this line when run successfully
             answers[i] = self.model.predict(state).flatten() #reshape to (num_of_actions)
             
             if is_terminate:
@@ -37,8 +36,8 @@ class ExperienceDB(object):
                 answers[i][action] = reward + (gamma*qvalue_next)
             
         #For Conv2D input
-        _, r, c, _ = state.shape
-        inputs = inputs.reshape(batch_size,r,c,1)
+        # _, r, c, _ = state.shape
+        # inputs = inputs.reshape(batch_size,r,c,1)
        
         return inputs, answers
         

@@ -1,23 +1,32 @@
-import random
-from maze import DIR
+import random, sys
 import numpy as np
+from maze import Maze, DIR
+from model import default_model
+from experience_db import ExperienceDB
 from keras import backend as K
-import sys
+
 
 class DQN(object):        
-    def __init__(self, maze=None, model=None, experience_db=None, **params):
-        self.maze = maze
-        self.model = model
-        self.experience_db = experience_db
-        self.batch_size = params.get('batch_size', 32)
-        self.gamma = params.get('gamma', 0.95)
-        self.epsilon = params.get('epsilon', 0.)
-        self.epochs = params.get('epochs', 100)
-        self.num_moves_limit = params.get('num_moves_limit', None)
-        self.rounds_to_test = params.get("rounds_to_test", 100)
-        self.saved_model_path = params.get('saved_model_path', "")
-        self.rounds_to_save_model = params.get('rounds_to_save_model', 0)
-    
+    def __init__(self, **train_params):
+        #####Training parameters#####
+        self.batch_size = train_params.get('batch_size', 32)
+        self.learning_rate  = train_params.get('learning_rate', 1e-4)
+        self.gamma = train_params.get('gamma', 1.)
+        self.epsilon = train_params.get('epsilon', 0.05)
+        self.epochs = train_params.get('epochs', 100)
+        self.num_moves_limit = train_params.get('num_moves_limit', None)
+        self.rounds_to_test = train_params.get("rounds_to_test", 100)
+        self.saved_model_path = train_params.get('saved_model_path', "")
+        self.rounds_to_save_model = train_params.get('rounds_to_save_model', 10000)
+
+        ######DQN parameters#####
+        lb = train_params.get("maze_reward_lower_bound", None)
+        self.maze = Maze(lower_bound = lb)
+        self.db_capacity = train_params.get('db_capacity', 1000)
+        self.model = default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions())
+        self.experience_db = ExperienceDB(self.model, self.db_capacity)
+
+
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
             dir = random.randint(0,3)
@@ -41,9 +50,9 @@ class DQN(object):
             self.maze.reset()
             # print("Epoch:%d" %(i))
 
-            #Decay learning_rate
-            # if i % 10000 == 0:
-            #     self.decay_learning_rate()
+            # Decay learning_rate
+            if i % 10000 == 0:
+                self.decay_learning_rate()
             # if i%500 == 0:
                 # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
                     # print(loss_sum_prev, "  ", loss_sum)
@@ -91,11 +100,8 @@ class DQN(object):
     def test(self, rounds=100):
        win_rate = 0.
        average_reward = 0.
-       loss = 0.
        optimal_rate = 0.
        diff_count_sum = 0
-       count = 0
-       self.maze.reset()
        test_input = list()
        test_answer = list()
 
@@ -107,7 +113,6 @@ class DQN(object):
                a = self.model.predict(s)    #With shape (batch, num_actions) -> (1,4)
                dir = np.argmax(a)
 
-               count += 1
                s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                average_reward += r
 
@@ -129,12 +134,11 @@ class DQN(object):
                if is_terminate:
                    break
 
-       test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, row, col, 1] to [batch, row, col, 1]
+       test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
        test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
        # print(np.shape(test_input), "   ", np.shape(test_answer))
 
-       # inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-       loss = self.model.evaluate(test_input, test_answer, verbose=0)
+       loss = self.model.evaluate(np.array(test_input), np.array(test_answer), verbose=0)
        win_rate = (win_rate/rounds)*100
        optimal_rate = (optimal_rate/rounds)*100
        average_reward /= rounds
