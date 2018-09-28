@@ -60,7 +60,7 @@ class Maze(object):
         self.goal = [nrows-1, ncols-1]
         self.move_count = 0
         self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
-        self.reward_lower_bound = -0.05*maze.size
+        self.reward_lower_bound = -0.03*maze.size
         self.reward_sum = 0.
         # self.visited_list = np.zeros(np.shape(self.maze))
         # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1

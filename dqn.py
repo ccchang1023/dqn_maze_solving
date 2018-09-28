@@ -2,6 +2,7 @@ import random
 from maze import DIR
 import numpy as np
 from keras import backend as K
+import sys
 
 class DQN(object):        
     def __init__(self, maze=None, model=None, experience_db=None, **params):
@@ -37,9 +38,9 @@ class DQN(object):
         loss_sum = 0.
         loss_sum_prev = 0.
         for i in range(self.epochs):
-            print("Epoch:%d" %(i))
             self.maze.reset()
-            
+            # print("Epoch:%d" %(i))
+
             #Decay learning_rate
             if i % 10000 == 0:
                 self.decay_learning_rate()
@@ -51,12 +52,14 @@ class DQN(object):
                 # loss_sum_prev = loss_sum
                 # loss_sum = 0.
             # print("Epoch:", i)
+            keep_playing = False
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
-                if random.random() > self.epsilon:
-                    dir = self.get_best_action(s)
+                if keep_playing or random.random() <= self.epsilon:
+                    dir = np.random.randint(0, 3)
+                    keep_playing = False
                 else:
-                    dir = np.random.randint(0,3)
+                    dir = self.get_best_action(s)
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add(transition)
@@ -65,16 +68,19 @@ class DQN(object):
                 history = self.model.fit(inputs, answers, epochs=8, batch_size=16, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
-                
-                #Even the game return terminate, keep training until reach goal or surpass lower bound 
+
+                #Even the game return terminate, keep training until reach goal or surpass lower bound
                 #(but update reward will only be r, check in get_data function)
                 if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
+                elif is_terminate:
+                    keep_playing = True
 
-            if i%50 == 0:
-                print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(), 
-                      self.maze.get_reward_sum(), loss))
-            if i%self.rounds_to_test==0:
+            # if i%100 == 0:
+            #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),
+            #           self.maze.get_reward_sum(), loss))
+            if i % 50 == 0:
+                sys.stdout.write("Epochs:%d" %(i))
                 self.test(self.rounds_to_test)
 
             if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
@@ -86,13 +92,31 @@ class DQN(object):
        loss = 0.
        optimal_rate = 0.
        diff_count_sum = 0
+       count = 0
+       self.maze.reset()
+       test_input = list()
+       test_answer = list()
+
        for i in range(rounds):
            self.maze.reset()
            for j in range(self.num_moves_limit):
                s = self.maze.get_state()
-               dir = self.get_best_action(s)
-               _, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+               # dir = self.get_best_action(s)
+               a = self.model.predict(s)    #With shape (batch, num_actions) -> (1,4)
+               dir = np.argmax(a)
+
+               count += 1
+               s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                average_reward += r
+
+               #Get corresponding x_test and y_test
+               if is_terminate:
+                   a[0][dir] = r + self.gamma*np.max(self.model.predict(s_next))
+               else:
+                   a[0][dir] = r
+               test_input.append(s)
+               test_answer.append(a)
+
                if is_goal:
                    win_rate += 1
                    diff_count = self.maze.get_optimal_solution_diff()
@@ -100,16 +124,19 @@ class DQN(object):
                        optimal_rate += 1
                    else:
                        diff_count_sum += diff_count
-                       
                if is_terminate:
                    break
-       
-       inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-       loss = self.model.evaluate(inputs, answers, verbose=0)
+
+       test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, row, col, 1] to [batch, row, col, 1]
+       test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
+       # print(np.shape(test_input), "   ", np.shape(test_answer))
+
+       # inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
+       loss = self.model.evaluate(test_input, test_answer, verbose=0)
        win_rate = (win_rate/rounds)*100
        optimal_rate = (optimal_rate/rounds)*100
        average_reward /= rounds
-       output_str = str("Test Result: Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
+       output_str = str(" Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
                         "Diff_count_sum:%d      Average_reward:%.4f"
                         %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
        print(output_str)
