@@ -1,10 +1,10 @@
-import random, sys
+import random, sys, os
 import numpy as np
 from maze import Maze, DIR
 from model import default_model
 from experience_db import ExperienceDB
 from keras import backend as K
-
+from keras.callbacks import TensorBoard
 
 class DQN(object):        
     def __init__(self, **train_params):
@@ -18,6 +18,7 @@ class DQN(object):
         self.num_moves_limit = train_params.get('num_moves_limit', None)
         self.rounds_to_test = train_params.get("rounds_to_test", 100)
         self.saved_model_path = train_params.get('saved_model_path', "")
+        self.tensorboard_log_path = train_params.get("tensorboard_log_path", "")
         self.rounds_to_save_model = train_params.get('rounds_to_save_model', 10000)
 
         ######DQN parameters#####
@@ -34,7 +35,7 @@ class DQN(object):
             s = self.maze.get_state()
             s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
             transition = [s,dir,r,s_next,is_terminate]
-            self.experience_db.add(transition)
+            self.experience_db.add_data(transition)
     
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
@@ -47,14 +48,23 @@ class DQN(object):
     def train(self):
         loss_sum = 0.
         loss_sum_prev = 0.
+        tbCallBack = None
+        if self.tensorboard_log_path != "":
+            if not os.path.isfile(self.tensorboard_log_path):
+                str = "mkdir " + self.tensorboard_log_path 
+                os.system(str)
+            tbCallBack = TensorBoard(log_dir=self.tensorboard_log_path, histogram_freq=0,
+                                                 write_graph=False, write_images=True)
+        
         for i in range(self.epochs):
             self.maze.reset()
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 20000 == 0 and i!=0 :
+            if i % 10000 == 0 and i!=0 :
                 self.decay_learning_rate()
                 print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
+                
             # if i%500 == 0:
                 # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
                     # print(loss_sum_prev, "  ", loss_sum)
@@ -63,7 +73,11 @@ class DQN(object):
                 # loss_sum_prev = loss_sum
                 # loss_sum = 0.
             # print("Epoch:", i)
+            
             keep_playing = False
+            transition_list = list()
+            
+            
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
                 if keep_playing or random.random() <= self.epsilon:
@@ -73,10 +87,11 @@ class DQN(object):
                     dir = self.get_best_action(s)
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
-                self.experience_db.add(transition)
+                self.experience_db.add_data(transition)
+                transition_list.append(transition)  #Collect game data in playing order
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                history = self.model.fit(inputs, answers, epochs=8, batch_size =16, verbose=0)
+                history = self.model.fit(inputs, answers, epochs=1, batch_size =len(inputs), verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
 
@@ -84,6 +99,8 @@ class DQN(object):
                 #     break
                 #Even the game return terminate, keep training until reach goal or surpass lower bound
                 if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                    if is_goal:
+                        self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach goal
                     break
                 elif is_terminate:
                     keep_playing = True

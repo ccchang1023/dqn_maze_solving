@@ -11,6 +11,7 @@ train_params={
     'num_moves_limit' : 500,
     'rounds_to_test' : 100,
     'saved_model_path' : "./saved_model/test.h5",
+    # 'tensorboard_log_path' : './log/test/',
     'rounds_to_save_model' : 20000,
     'maze_reward_lower_bound' : -3.,
     'db_capacity': 2000,
