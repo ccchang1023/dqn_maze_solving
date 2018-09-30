@@ -11,7 +11,8 @@ from maze import Maze, DEFAULT_MAZE
 def main():
 
     m = Maze()
-
+    m.generate_map(size=20,road_ratio=0.7)
+    return
     # m.create_img()
     # plt.show()
     

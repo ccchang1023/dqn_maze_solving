@@ -205,7 +205,85 @@ class Maze(object):
         m[x][y] = 2
         print(m)
 
+    
+    def generate_map(self, size=10, road_ratio=0.7):
+        m = np.zeros([size,size],dtype=int)
+        
+        #Initialize in down stair ways
+        # for x in range(size):
+            # for y in range(size):
+                # if x==y:
+                    # m[x][y] = 1
+                    # y += 1
+                # elif x==y-1:
+                    # m[x][y] = 1
+                    # x += 1        
+        
+        #Initialize in 'U' way
+        x = y = 0
+        while x < size:
+            m[x][y] = 1
+            x += 1
+        x -= 1
+        while y < size:
+            m[x][y] = 1
+            y += 1
+        y -= 1
+        while x >= 0:
+            m[x][y] = 1
+            x -= 1
+        
+        
+        road_list = [[x,y] for x in range(size) for y in range(size) if m[x][y]==1.0]
+        neighbor_list = np.array(self.get_block_neighbor_by_list(m, road_list))
+        # print("neighbor_list shape:", np.shape(neighbor_list))
+        # print(neighbor_list)
+        x,y = random.choice(neighbor_list)
+        nb = np.array(self.get_block_neighbor_by_point(m,x,y))
+        # print("nb shape:", np.shape(nb))
+        # print(nb)
+        neighbor_list = np.append(neighbor_list,nb,axis=0)
+        
+        road_num = int(size*size*road_ratio)
+        road_count = neighbor_list.shape[0]
+        while road_count < road_num:
+            randNum = random.randint(0,neighbor_list.shape[0]-1)
+            x,y = neighbor_list[randNum]
+            neighbor_list = np.delete(neighbor_list, randNum, axis=0)            
+            m[x][y] = 1
+            nb = np.array(self.get_block_neighbor_by_point(m,x,y))
+            if nb.shape[0] != 0:
+                neighbor_list = np.append(neighbor_list,nb,axis=0)
+                road_count += 1
+        # print("final shape:", neighbor_list.shape)
+        # print(neighbor_list)
+        print(m)
 
+       
+    def get_block_neighbor_by_list(self, maze, road_list):
+        size = maze[0].size
+        nb = list()
+        for x,y in road_list:
+            # print("size:", size)
+            next = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+            for [r,c] in next:
+                if r>=0 and r<size and c>=0 and c<size and maze[r][c] == 0 and not [r,c] in nb:
+                    nb.append([r,c])
+            # print(nb)
+            # print(np.shape(nb))
+        return nb
+
+        
+    def get_block_neighbor_by_point(self, maze, x, y):
+        size = maze[0].size
+        nb = list()
+        next = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+        for [r,c] in next:
+            if r>=0 and r<size and c>=0 and c<size and maze[r][c] == 0 and not [r,c] in nb:
+                nb.append([r,c])
+        return nb
+
+        
     def create_img(self):
         plt.grid(True)
         nrows, ncols = np.shape(self.maze)
