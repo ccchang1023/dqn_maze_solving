@@ -48,7 +48,9 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, maze=DEFAULT_MAZE, num_of_actions=4, lower_bound=None):
-        self.maze = maze
+        # self.maze = maze
+        self.maze = self.generate_map(size=20,road_ratio=0.5)
+        print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         self.reset()
@@ -60,12 +62,12 @@ class Maze(object):
         self.token_pos = random.choice(self.road_list)
         self.goal = [-1,-1]
         if fix_goal:
-            self.goal = [nrows-1, ncols-1]
+            self.goal = [0, ncols-1]
         else:
             while self.goal != self.token_pos:
                 self.goal = random.choice(self.road_list)
         self.move_count = 0
-        self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
+        # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
         self.visited_list = np.zeros(np.shape(self.maze))
         self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
@@ -233,7 +235,6 @@ class Maze(object):
             m[x][y] = 1
             x -= 1
         
-        
         road_list = [[x,y] for x in range(size) for y in range(size) if m[x][y]==1.0]
         neighbor_list = np.array(self.get_block_neighbor_by_list(m, road_list))
         # print("neighbor_list shape:", np.shape(neighbor_list))
@@ -257,7 +258,7 @@ class Maze(object):
                 road_count += 1
         # print("final shape:", neighbor_list.shape)
         # print(neighbor_list)
-        print(m)
+        return m
 
        
     def get_block_neighbor_by_list(self, maze, road_list):

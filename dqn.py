@@ -99,7 +99,7 @@ class DQN(object):
             if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
                 self.model.save(self.saved_model_path)
             
-    def test(self, rounds=100):
+    def test(self, rounds=100, is_count_opt=False):
        win_rate = 0.
        average_reward = 0.
        optimal_rate = 0.
@@ -128,11 +128,12 @@ class DQN(object):
 
                if is_goal:
                    win_rate += 1
-                   diff_count = self.maze.get_optimal_solution_diff()
-                   if diff_count == 0:
-                       optimal_rate += 1
-                   else:
-                       diff_count_sum += diff_count
+                   if is_count_opt:
+                       diff_count = self.maze.get_optimal_solution_diff()
+                       if diff_count == 0:
+                           optimal_rate += 1
+                       else:
+                           diff_count_sum += diff_count
                if is_terminate:
                    break
 
@@ -142,12 +143,16 @@ class DQN(object):
 
        loss = self.model.evaluate(np.array(test_input), np.array(test_answer), verbose=0)
        win_rate = (win_rate/rounds)*100
-       optimal_rate = (optimal_rate/rounds)*100
        average_reward /= rounds
-       output_str = str(" Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
-                        "Diff_count_sum:%d      Average_reward:%.4f"
-
-                        %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
+       if is_count_opt:
+           optimal_rate = (optimal_rate/rounds)*100
+           output_str = str(" Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
+                            "Diff_count_sum:%d      Average_reward:%.4f"
+                            %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
+                            
+       else:
+           output_str = str(" Loss:%f   Win_rate:%.2f%%    Diff_count_sum:%d      Average_reward:%.4f"
+                            %(loss, win_rate, diff_count_sum, average_reward))
        print(output_str)
         
         
