@@ -49,7 +49,9 @@ class DIR(Enum):
 class Maze(object):
     def __init__(self, maze=DEFAULT_MAZE, num_of_actions=4, lower_bound=None):
         # self.maze = maze
-        self.maze = self.generate_map(size=20,road_ratio=0.5)
+        self.maze = self.generate_map(size=40,road_ratio=0.5)
+        np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
+        # np.savetxt("file.txt", output, fmt='%10.5f', delimiter='\t')
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
@@ -80,6 +82,7 @@ class Maze(object):
         terminate_tag = False
         self.move_count += 1
         pos_before_move = list(self.token_pos)
+        reward = 0.
         # print("before move", pos_before_move)
         
         if dir == DIR.LEFT:
@@ -114,7 +117,7 @@ class Maze(object):
         else:
             self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             # self.visited_set.add(tuple(self.token_pos))
-            reward = -0.04
+            # reward = -0.04
 
         self.reward_sum += reward
         

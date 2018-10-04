@@ -52,7 +52,7 @@ class DQN(object):
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 20000 == 0 and i!=0 :
+            if i % 10000 == 0 and i!=0 :
                 self.decay_learning_rate()
                 print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
             # if i%500 == 0:
@@ -76,23 +76,23 @@ class DQN(object):
                 self.experience_db.add(transition)
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                history = self.model.fit(inputs, answers, epochs=8, batch_size =16, verbose=0)
+                history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
 
-                # if is_terminate:
-                #     break
-                #Even the game return terminate, keep training until reach goal or surpass lower bound
-                if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
-                elif is_terminate:
-                    keep_playing = True
+                #Even the game return terminate, keep training until reach goal or surpass lower bound
+                # if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                #     break
+                # elif is_terminate:
+                #     keep_playing = True
 
 
             # if i%100 == 0:
             #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),
             #           self.maze.get_reward_sum(), loss))
-            if i % 50 == 0:
+            if i % 100 == 0:
                 sys.stdout.write("Epochs:%d" %(i))
                 self.test(self.rounds_to_test)
 
@@ -100,59 +100,74 @@ class DQN(object):
                 self.model.save(self.saved_model_path)
             
     def test(self, rounds=100, is_count_opt=False):
-       win_rate = 0.
-       average_reward = 0.
-       optimal_rate = 0.
-       diff_count_sum = 0
-       test_input = list()
-       test_answer = list()
+        win_count = 0.
+        average_reward = 0.
+        optimal_rate = 0.
+        diff_count_sum = 0
+        test_input = list()
+        test_answer = list()
+        moves_count = 0.
+        goal_moves = 0.
+        fail_moves = 0.
+        average_goal_moves = average_fail_moves = 0
 
-       for i in range(rounds):
-           self.maze.reset()
-           for j in range(self.num_moves_limit):
-               s = self.maze.get_state()
-               # dir = self.get_best_action(s)
-               a = self.model.predict(s)    #With shape (batch, num_actions) -> (1,4)
-               dir = np.argmax(a)
+        for i in range(rounds):
+            self.maze.reset()
+            moves_count = 0.
+            for j in range(self.num_moves_limit):
+                s = self.maze.get_state()
+                # dir = self.get_best_action(s)
+                a = self.model.predict(s)    #With shape (batch, num_actions) -> (1,4)
+                dir = np.argmax(a)
 
-               s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-               average_reward += r
+                s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                average_reward += r
+                moves_count += 1
 
-               #Get corresponding x_test and y_test
-               if is_terminate:
-                   a[0][dir] = r + self.gamma*np.max(self.model.predict(s_next))
-               else:
-                   a[0][dir] = r
-               test_input.append(s)
-               test_answer.append(a)
+                #Get corresponding x_test and y_test
+                if is_terminate:
+                    a[0][dir] = r + self.gamma*np.max(self.model.predict(s_next))
+                else:
+                    a[0][dir] = r
+                test_input.append(s)
+                test_answer.append(a)
 
-               if is_goal:
-                   win_rate += 1
-                   if is_count_opt:
-                       diff_count = self.maze.get_optimal_solution_diff()
-                       if diff_count == 0:
-                           optimal_rate += 1
-                       else:
-                           diff_count_sum += diff_count
-               if is_terminate:
-                   break
+                if is_goal:
+                    win_count += 1
+                    goal_moves += moves_count
+                    if is_count_opt:
+                        diff_count = self.maze.get_optimal_solution_diff()
+                        if diff_count == 0:
+                            optimal_rate += 1
+                        else:
+                            diff_count_sum += diff_count
+                if is_terminate:
+                    if not is_goal:
+                        fail_moves += moves_count
+                    break
 
-       test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
-       test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
-       # print(np.shape(test_input), "   ", np.shape(test_answer))
+        test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
+        test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
+        # print(np.shape(test_input), "   ", np.shape(test_answer))
 
-       loss = self.model.evaluate(np.array(test_input), np.array(test_answer), verbose=0)
-       win_rate = (win_rate/rounds)*100
-       average_reward /= rounds
-       if is_count_opt:
-           optimal_rate = (optimal_rate/rounds)*100
-           output_str = str(" Loss:%f   Win_rate:%.2f%%     Optimal_solution_rate:%.2f%%    "
-                            "Diff_count_sum:%d      Average_reward:%.4f"
-                            %(loss, win_rate, optimal_rate, diff_count_sum, average_reward))
-                            
-       else:
-           output_str = str(" Loss:%f   Win_rate:%.2f%%    Diff_count_sum:%d      Average_reward:%.4f"
-                            %(loss, win_rate, diff_count_sum, average_reward))
-       print(output_str)
+        loss = self.model.evaluate(np.array(test_input), np.array(test_answer), verbose=0)
+        win_rate = (win_count/rounds)*100
+        average_reward /= rounds
+        if win_count !=0:
+            average_goal_moves = (goal_moves/win_count)
+        if (rounds-win_count)!=0:
+            average_fail_moves = (fail_moves/(rounds-win_count))
+
+
+        if is_count_opt:
+            optimal_rate = (optimal_rate/rounds)*100
+            output_str = str(" Loss:%f\tWin_rate:%.2f%%\tOptimal_solution_rate:%.2f%%\t"
+                             "Diff_count_sum:%d\tAverage gmoves:%f\tAverage fmoves:%f\tAverage_reward:%.4f"
+                             %(loss, win_rate, optimal_rate, diff_count_sum, average_goal_moves, average_fail_moves, average_reward))
+
+        else:
+            output_str = str(" Loss:%f\tWin_rate:%.2f%%\tDiff_count_sum:%d\tAverage gmoves:%.2f\tAverage fmoves:%.2f\tAverage_reward:%.4f"
+                             %(loss, win_rate, diff_count_sum, average_goal_moves, average_fail_moves,average_reward))
+        print(output_str)
         
         

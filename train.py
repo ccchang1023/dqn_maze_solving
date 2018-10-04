@@ -3,17 +3,17 @@ from dqn import DQN
 
 
 train_params={
-    'batch_size' : 32,
+    'batch_size' : 64,
     'gamma' : 1., #discount value when update the qvalue, 0~1
     'epsilon' : 0.05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-4,
+    'learning_rate' : 1e-6,
     'epochs' : 100000,
-    'num_moves_limit' : 500,
+    'num_moves_limit' : 1600,
     'rounds_to_test' : 100,
     'saved_model_path' : "./saved_model/test.h5",
-    'rounds_to_save_model' : 20000,
-    'maze_reward_lower_bound' : -0.03*400,
-    'db_capacity': 2000,
+    'rounds_to_save_model' : 10000,
+    'maze_reward_lower_bound' : -0.05*1600,
+    'db_capacity': 300,
     'Model_type': "dense",
 }
 

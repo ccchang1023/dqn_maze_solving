@@ -16,11 +16,13 @@ def default_model(learning_rate, state_size, num_of_actions):
     model.add(PReLU())
     model.add(Dense(state_size))
     model.add(PReLU())
-    model.add(Dense(state_size))
+    model.add(Dense(state_size*2))
     model.add(PReLU())
     model.add(Dense(num_of_actions))
     opt = Adam(learning_rate, epsilon=1e-8)
+    # opt = RMSprop(learning_rate)
     model.compile(optimizer=opt, loss='mse')
+    model.summary()
     return model
  
 def conv2d_model(state_shape, num_of_actions):
