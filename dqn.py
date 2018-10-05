@@ -52,7 +52,7 @@ class DQN(object):
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 10000 == 0 and i!=0 :
+            if i % 7000 == 0 and i!=0 :
                 self.decay_learning_rate()
                 print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
             # if i%500 == 0:
