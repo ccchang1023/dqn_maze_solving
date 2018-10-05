@@ -14,6 +14,7 @@ train_params={
     'rounds_to_save_model' : 10000,
     'maze_reward_lower_bound' : -0.05*1600,
     'db_capacity': 500,
+    #'tensorboard_log_path' : './log/test/',
     'Model_type': "dense",
 }
 
