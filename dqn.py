@@ -91,13 +91,15 @@ class DQN(object):
                 transition_list.append(transition)  #Collect game data in playing order
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
+                # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
+                train_loss = self.model.train_on_batch(inputs, answers)
+
                 loss = self.model.evaluate(inputs, answers, verbose=0)
                 loss_sum += loss
 
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     if is_goal:
-                        self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach goal
+                        self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
                     break
                 #Even the game return terminate, keep training until reach goal or surpass lower bound
                 # if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
