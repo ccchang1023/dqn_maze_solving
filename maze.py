@@ -48,9 +48,9 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, maze=DEFAULT_MAZE, num_of_actions=4, lower_bound=None):
-        self.maze = maze
-        # self.maze = self.generate_map(size=40,road_ratio=0.5)
-        # np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
+        # self.maze = maze
+        self.maze = self.generate_map(size=40,road_ratio=0.5)
+        np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
         # np.savetxt("file.txt", output, fmt='%10.5f', delimiter='\t')
         print(self.maze)
         self.num_of_actions = num_of_actions

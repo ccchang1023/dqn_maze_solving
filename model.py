@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
-from keras.activations import relu
+from keras.layers.normalization import BatchNormalization
+from keras import regularizers
 from keras.models import load_model
 from keras.optimizers import SGD, Adam, RMSprop
 from keras.layers.advanced_activations import LeakyReLU, PReLU
@@ -12,12 +13,17 @@ def restore_model(path):
 def default_model(learning_rate, state_size, num_of_actions):
     model = Sequential()
     # Input shape should be: (batch, maze_size) 
-    model.add(Dense(state_size, input_shape=(state_size,)))
+    model.add(Dense(state_size*3, input_shape=(state_size,)))
+    # model.add(BatchNormalization())
     model.add(PReLU())
-    model.add(Dense(state_size))
-    model.add(PReLU())
-    model.add(Dense(state_size*2))
-    model.add(PReLU())
+    model.add(Dropout(0.2))
+
+
+    # model.add(Dense(state_size*2))
+    # # model.add(BatchNormalization())
+    # model.add(PReLU())
+    # model.add(Dropout(0.2))
+
     model.add(Dense(num_of_actions))
     opt = Adam(learning_rate, epsilon=1e-8)
     # opt = RMSprop(learning_rate)

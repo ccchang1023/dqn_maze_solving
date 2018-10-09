@@ -38,34 +38,30 @@ class ExperienceDB(object):
                 answers[i][dir] = reward + (gamma*qvalue_next)
 
         #Collect goal data
-        goal_state_list = list()
-        goal_answer_list = list()
-        sample_num = int(batch_size*goal_data_ratio)
-        if sample_num > len(self.game_order_data_list):
-            sample_num = len(self.game_order_data_list)
-        count = 0
-        if len(self.game_order_data_list) > 0:
-            transitions = random.sample(self.game_order_data_list, sample_num)
-            for i in range(len(transitions)):
-                for state, dir, reward, next_state, is_terminate in transitions[i]:
-                    goal_state_list.append(state.flatten())
-                    action_value = self.model.predict(next_state).flatten()
-                    if is_terminate:
-                        action_value[dir] = reward
-                    else:
-                        qvalue_next = np.max(self.model.predict(next_state))
-                        action_value[dir] = reward + (gamma*qvalue_next)
-                    goal_answer_list.append(action_value)
+        # goal_state_list = list()
+        # goal_answer_list = list()
+        # sample_num = int(batch_size*goal_data_ratio)
+        # if sample_num > len(self.game_order_data_list):
+        #     sample_num = len(self.game_order_data_list)
+        # count = 0
+        # if len(self.game_order_data_list) > 0:
+        #     transitions = random.sample(self.game_order_data_list, sample_num)
+        #     for i in range(len(transitions)):
+        #         for state, dir, reward, next_state, is_terminate in transitions[i]:
+        #             goal_state_list.append(state.flatten())
+        #             action_value = self.model.predict(next_state).flatten()
+        #             if is_terminate:
+        #                 action_value[dir] = reward
+        #             else:
+        #                 qvalue_next = np.max(self.model.predict(next_state))
+        #                 action_value[dir] = reward + (gamma*qvalue_next)
+        #             goal_answer_list.append(action_value)
+        # # print("goal_state_list shape:", np.shape(goal_state_list))
+        # # print("goal_answer_list shape:", np.shape(goal_answer_list))
+        # if len(goal_state_list) != 0:
+        #     inputs = np.append(inputs, goal_state_list, axis=0)
+        #     answers = np.append(answers, goal_answer_list, axis=0)
 
-        # print("goal_state_list shape:", np.shape(goal_state_list))
-        # print("goal_answer_list shape:", np.shape(goal_answer_list))
-
-        if len(goal_state_list) != 0:
-            inputs = np.append(inputs, goal_state_list, axis=0)
-            answers = np.append(answers, goal_answer_list, axis=0)
-
-            # print("shape of input:", np.shape(inputs))
-            # print("shape of answers:", np.shape(answers))
 
         #For Conv2D input
         # _, r, c, _ = state.shape

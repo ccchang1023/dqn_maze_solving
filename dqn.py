@@ -61,7 +61,7 @@ class DQN(object):
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 7000 == 0 and i!=0 :
+            if i % 30000 == 0 and i!=0 :
                 self.decay_learning_rate()
                 print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
                 
@@ -88,7 +88,7 @@ class DQN(object):
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add_data(transition)
-                transition_list.append(transition)  #Collect game data in playing order
+                # transition_list.append(transition)  #Collect game data in playing order
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
                 # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
@@ -98,8 +98,8 @@ class DQN(object):
                 loss_sum += loss
 
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    if is_goal:
-                        self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
+                    # if is_goal:
+                    #     self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
                     break
                 #Even the game return terminate, keep training until reach goal or surpass lower bound
                 # if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
@@ -160,7 +160,7 @@ class DQN(object):
                             optimal_rate += 1
                         else:
                             diff_count_sum += diff_count
-                if is_terminate:
+                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     if not is_goal:
                         fail_moves += moves_count
                     break
