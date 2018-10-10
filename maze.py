@@ -112,7 +112,7 @@ class Maze(object):
 
         elif self.is_visited(self.token_pos[0],self.token_pos[1]):
             # print("is_visited!")
-            reward = -0.25
+            reward = -0.125
 
         else:
             self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
@@ -142,7 +142,6 @@ class Maze(object):
 
         #state3: token_pos + goal + maze +visited_list
         state = np.append(self.token_pos, self.goal)
-        # state = np.append(state, np.copy(self.maze))
         return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
