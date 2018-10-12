@@ -47,21 +47,37 @@ class DIR(Enum):
 
 
 class Maze(object):
-    def __init__(self, maze=DEFAULT_MAZE, num_of_actions=4, lower_bound=None):
-        # self.maze = maze
-        self.maze = self.generate_map(size=40,road_ratio=0.5)
-        np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
-        # np.savetxt("file.txt", output, fmt='%10.5f', delimiter='\t')
+    def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=None):
+        if load_maze_path != None:
+            self.maze = np.loadtxt(load_maze_path)
+        else:
+            self.maze = self.generate_map(size=40,road_ratio=0.5)
+            np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         self.reset()
-                      
-    def reset(self, fix_goal=True):
+
+        #To create img and animation
+        self.fig = plt.figure()
+        plt.grid(True)
+        nrows, ncols = np.shape(self.maze)
+        ax = plt.gca()
+        ax.set_xticks(np.arange(0.5, nrows, 1))
+        ax.set_yticks(np.arange(0.5, ncols, 1))
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+
+
+    def reset(self, fix_goal=True, start_pos=None):
         self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
         self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
-        self.token_pos = random.choice(self.road_list)
+        if start_pos != None:
+            self.token_pos = start_pos
+        else:
+            self.token_pos = random.choice(self.road_list)
+
         self.goal = [-1,-1]
         if fix_goal:
             self.goal = [0, ncols-1]
@@ -288,45 +304,32 @@ class Maze(object):
 
         
     def create_img(self):
-        plt.grid(True)
         nrows, ncols = np.shape(self.maze)
-        ax = plt.gca()
-        ax.set_xticks(np.arange(0.5, nrows, 1))
-        ax.set_yticks(np.arange(0.5, ncols, 1))
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
         canvas = np.copy(self.maze).astype(float)
-        # for row,col in self.visited_set:
-            # canvas[row,col] = 0.6
+        visited_point = [[x,y] for x in range(nrows) for y in range(ncols) if self.visited_list[x][y]==1]
+        for x,y in visited_point:
+            canvas[x,y] = 0.6
+
         rat_row, rat_col  = self.token_pos
         canvas[rat_row, rat_col] = 0.3   # token cell
-        canvas[nrows-1, ncols-1] = 0.9 # goal cell
-        img = plt.imshow(canvas, interpolation='None', cmap='gray', animated=False)
+
+        x,y = self.goal
+        canvas[x,y] = 0.9 # goal cell
+        img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
         self.img_list.append([img])
-        
+        # print("creat")
+
+    def gen_animate(self, i):
+        return self.img_list[i]
+
     def show_animate(self):
-        fig = plt.figure()
-        ani = animation.ArtistAnimation(fig,self.img_list, interval=50, blit=True, repeat_delay=1000)
+        ani = animation.ArtistAnimation(self.fig, self.img_list, interval=50, blit=True, repeat_delay=1000)
+        # ani = animation.FuncAnimation(fig=self.fig, func=self.gen_animate, frames=self.move_count, blit=True, interval=70)
         plt.show()
+        # ani.save("test.mp4", fps=30, extra_args=['-vcodec', 'libx264'])
+        ani.save("loop.mp4")
         
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         
         
         

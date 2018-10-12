@@ -5,6 +5,8 @@ from model import default_model
 from experience_db import ExperienceDB
 from keras import backend as K
 from keras.callbacks import TensorBoard
+from keras.utils import plot_model
+from keras.models import load_model
 
 class DQN(object):        
     def __init__(self, **train_params):
@@ -17,15 +19,20 @@ class DQN(object):
         self.epochs = train_params.get('epochs', 100)
         self.num_moves_limit = train_params.get('num_moves_limit', None)
         self.rounds_to_test = train_params.get("rounds_to_test", 100)
+        self.load_maze_path = train_params.get('load_maze_path', "")
         self.saved_model_path = train_params.get('saved_model_path', "")
+        self.load_model_path = train_params.get('load_model_path', "")
         self.tensorboard_log_path = train_params.get("tensorboard_log_path", "")
         self.rounds_to_save_model = train_params.get('rounds_to_save_model', 10000)
 
         ######DQN parameters#####
         lb = train_params.get("maze_reward_lower_bound", None)
-        self.maze = Maze(lower_bound = lb)
+        self.maze = Maze(lower_bound = lb, load_maze_path = self.load_maze_path)
         self.db_capacity = train_params.get('db_capacity', 1000)
-        self.model = default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions())
+        if self.load_model_path != "":
+            self.model = load_model(self.load_model_path)
+        else:
+            self.model = default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions())
         self.experience_db = ExperienceDB(self.model, self.db_capacity)
 
 
@@ -46,6 +53,8 @@ class DQN(object):
         K.set_value(self.model.optimizer.lr, lr*decay)
     
     def train(self):
+        plot_model(self.model, to_file="model1.png", show_shapes=True, show_layer_names=True)
+        return
         loss_sum = 0.
         loss_sum_prev = 0.
         tbCallBack = None
@@ -130,8 +139,12 @@ class DQN(object):
         fail_moves = 0.
         average_goal_moves = average_fail_moves = 0
 
+
         for i in range(rounds):
             self.maze.reset()
+            # self.maze.reset(start_pos = [0,6]) #fail loop
+            # self.maze.reset(start_pos = [5,5])    #win
+            # self.maze.reset(start_pos=[20,3])   #win, optimal
             moves_count = 0.
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
@@ -140,6 +153,9 @@ class DQN(object):
                 dir = np.argmax(a)
 
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                self.maze.create_img()
+
+
                 average_reward += r
                 moves_count += 1
 
@@ -164,6 +180,7 @@ class DQN(object):
                     if not is_goal:
                         fail_moves += moves_count
                     break
+            self.maze.show_animate()
 
         test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
         test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]

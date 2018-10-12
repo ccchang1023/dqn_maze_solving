@@ -7,9 +7,6 @@ from keras.optimizers import SGD, Adam, RMSprop
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 
 
-def restore_model(path):
-    return load_model(path)
-
 def default_model(learning_rate, state_size, num_of_actions):
     model = Sequential()
     # Input shape should be: (batch, maze_size) 

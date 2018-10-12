@@ -10,7 +10,9 @@ train_params={
     'epochs' : 1000000,
     'num_moves_limit' : 1600,
     'rounds_to_test' : 100,
+    'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
+    'load_model_path' : "./saved_model/40x40_lr5e-5_98%.h5",
     'rounds_to_save_model' : 10000,
     'maze_reward_lower_bound' : -0.03*1600,
     'db_capacity': 2000,
@@ -26,11 +28,11 @@ def main():
     print ("Initial dataset:", initial_rounds, " rounds")
     dqn.initial_dataset(initial_rounds)
     print("Start training")
-    dqn.train()
-    
+    # dqn.train()
+    dqn.test(1)
+
     # m.show_animate()
-    
-    
+
     
 if __name__ == "__main__":
     main()
