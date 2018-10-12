@@ -47,12 +47,13 @@ class DIR(Enum):
 
 
 class Maze(object):
-    def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=None):
-        if load_maze_path != None:
+    def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=""):
+        if load_maze_path != "":
             self.maze = np.loadtxt(load_maze_path)
         else:
-            self.maze = self.generate_map(size=40,road_ratio=0.5)
-            np.savetxt('40x40Maze_20181002',self.maze, fmt='%1.0f')
+            self.maze = self.generate_robot_map(size=40)
+            # self.maze = self.generate_map(size=40,road_ratio=0.5)
+            np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
@@ -225,7 +226,35 @@ class Maze(object):
         m[x][y] = 2
         print(m)
 
-    
+
+    def generate_robot_map(self, size=10):
+        m = np.ones([size,size], dtype=int)
+        w1 = h1 = size * 0.3
+        w2 = h2 = size * 0.2
+        self.set_block(m, (5,4), 6, 9)
+        self.set_block(m, (15,2), 4, 16)
+        self.set_block(m, (30,6), 8, 8)
+
+        self.set_block(m, (4, 22), 4, 16)
+        self.set_block(m, (0, 15), 4, 30)
+        self.set_block(m, (30, 20), 8, 8)
+        self.set_block(m, (20, 30), 6, 9)
+        self.set_block(m, (10, 32), 8, 8)
+        return m
+
+    def set_block(self, maze, center, h, w):
+        # Area will be (center.x+h) * (center.y+w)
+        tmp = np.copy(maze)
+        for i in range(center[0], center[0]+w):
+            for j in range(center[1], center[1]+h):
+                if maze[i][j] == 0:
+                    print("Set block failed on :", i ,"  ", j)
+                    maze = tmp
+                    return False
+                maze[i][j] = 0
+        return True
+
+
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
         
@@ -317,6 +346,7 @@ class Maze(object):
         canvas[x,y] = 0.9 # goal cell
         img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
         self.img_list.append([img])
+        plt.show()
         # print("creat")
 
     def gen_animate(self, i):

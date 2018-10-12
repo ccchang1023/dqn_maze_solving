@@ -23,7 +23,9 @@ class DQN(object):
         self.saved_model_path = train_params.get('saved_model_path', "")
         self.load_model_path = train_params.get('load_model_path', "")
         self.tensorboard_log_path = train_params.get("tensorboard_log_path", "")
+        self.rounds_to_decay_lr = train_params.get("rounds_to_decay_lr", None)
         self.rounds_to_save_model = train_params.get('rounds_to_save_model', 10000)
+
 
         ######DQN parameters#####
         lb = train_params.get("maze_reward_lower_bound", None)
@@ -53,8 +55,9 @@ class DQN(object):
         K.set_value(self.model.optimizer.lr, lr*decay)
     
     def train(self):
-        plot_model(self.model, to_file="model1.png", show_shapes=True, show_layer_names=True)
-        return
+        # plot_model(self.model, to_file="model1.png", show_shapes=True, show_layer_names=True)
+        # return
+
         loss_sum = 0.
         loss_sum_prev = 0.
         tbCallBack = None
@@ -70,23 +73,13 @@ class DQN(object):
             # print("Epoch:%d" %(i))
 
             # Decay learning_rate
-            if i % 8000 == 0 and i!=0 :
+            if i % self.rounds_to_decay_lr == 0 and i!=0 :
                 self.decay_learning_rate()
                 print("Decay learning rate to:", K.get_value(self.model.optimizer.lr))
-                
-            # if i%500 == 0:
-                # if loss_sum_prev != 0. and loss_sum_prev < loss_sum:
-                    # print(loss_sum_prev, "  ", loss_sum)
-                    # self.decay_learning_rate()
-                    # print("Decay learning rate to:",K.get_value(self.model.optimizer.lr))
-                # loss_sum_prev = loss_sum
-                # loss_sum = 0.
-            # print("Epoch:", i)
-            
+
             keep_playing = False
             transition_list = list()
-            
-            
+
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
                 if keep_playing or random.random() <= self.epsilon:
@@ -110,12 +103,6 @@ class DQN(object):
                     # if is_goal:
                     #     self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
                     break
-                #Even the game return terminate, keep training until reach goal or surpass lower bound
-                # if is_goal or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                #     break
-                # elif is_terminate:
-                #     keep_playing = True
-
 
             # if i%100 == 0:
             #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),
@@ -153,8 +140,7 @@ class DQN(object):
                 dir = np.argmax(a)
 
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                self.maze.create_img()
-
+                # self.maze.create_img()
 
                 average_reward += r
                 moves_count += 1
@@ -180,7 +166,7 @@ class DQN(object):
                     if not is_goal:
                         fail_moves += moves_count
                     break
-            self.maze.show_animate()
+            # self.maze.show_animate()
 
         test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
         test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
