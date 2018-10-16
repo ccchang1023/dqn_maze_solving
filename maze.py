@@ -53,7 +53,9 @@ class Maze(object):
         else:
             self.maze = self.generate_robot_map(size=40)
             # self.maze = self.generate_map(size=40,road_ratio=0.5)
-            np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+            # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+
+        # self.maze = DEFAULT_MAZE
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound

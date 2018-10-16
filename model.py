@@ -7,7 +7,7 @@ from keras.optimizers import SGD, Adam, RMSprop
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 
 
-def default_model(learning_rate, state_size, num_of_actions):
+def default_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
     model = Sequential()
     # Input shape should be: (batch, maze_size) 
     model.add(Dense(state_size*3, input_shape=(state_size,)))

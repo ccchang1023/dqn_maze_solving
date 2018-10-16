@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os, sys, time, datetime, json, random
 from maze import Maze, DIR
+from ddqn import DDQN
 import numpy as np
 import matplotlib.pyplot as plt
 from maze import Maze, DEFAULT_MAZE
@@ -9,26 +10,31 @@ from maze import Maze, DEFAULT_MAZE
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+
+train_params={
+    'batch_size' : 8,
+    'gamma' : .95, #discount value when update the qvalue, 0~1
+    'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
+    'learning_rate' : 5e-5,
+    'epochs' : 1000000,
+    'num_moves_limit' : 400,
+    'rounds_to_test' : 100,
+    # 'load_maze_path' : "40x40Maze_98%",
+    'saved_model_path' : "./saved_model/test.h5",
+    # 'load_model_path' : "./saved_model/40x40_lr5e-5_98%.h5",
+    'rounds_to_save_model' : 10000,
+    'rounds_to_decay_lr' : 10000,
+    'maze_reward_lower_bound' : -0.03*1600,
+    'db_capacity': 2000,
+    #'tensorboard_log_path' : './log/test/',
+    'Model_type': "dense",
+}
+
+
+
 def main():
 
-
-
-
-    # x = np.arange(0, np.pi * 2, np.pi / 10.0)
-    # y = np.sin(x)
-    # fig = plt.figure()
-    # imgs = []
-    # for i in range(len(x)):
-    #     img = plt.plot(x[:i + 1], y[:i + 1], 'b-o')
-    #     imgs.append(img)
-    # anim = animation.ArtistAnimation(fig, imgs, interval=100)
-    # anim.save('result1.gif', 'imagemagick')
-    # plt.show()
-    # return
-
-
-    m = Maze()
-    m.create_img()
+    ddqn = DDQN(**train_params)
 
     return
 

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from dqn import DQN
+from ddqn import DDQN
 
 
 train_params={
@@ -23,16 +24,19 @@ train_params={
 
 def main():
 
-    # model = restore_model('./saved_model/test.h5')
-    dqn = DQN(**train_params)
+    # dqn = DQN(**train_params)
+    # initial_rounds = 300
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # dqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # dqn.train()
+
+    ddqn = DDQN(**train_params)
     initial_rounds = 300
     print ("Initial dataset:", initial_rounds, " rounds")
-    dqn.initial_dataset(initial_rounds)
+    ddqn.initial_dataset(initial_rounds)
     print("Start training")
-    dqn.train()
-    # dqn.test(1)
-
-    # m.show_animate()
+    ddqn.train()
 
     
 if __name__ == "__main__":
