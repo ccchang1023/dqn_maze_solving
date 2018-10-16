@@ -47,7 +47,8 @@ class DDQN(DQN):
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
-            self.update_target_model()
+            if i%10 == 0:
+                self.update_target_model()
 
             # Decay learning_rate
             if i % self.rounds_to_decay_lr == 0 and i != 0:
