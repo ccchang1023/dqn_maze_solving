@@ -48,19 +48,21 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=""):
-        if load_maze_path != "":
-            self.maze = np.loadtxt(load_maze_path)
-        else:
-            self.maze = self.generate_robot_map(size=40)
-            # self.maze = self.generate_map(size=40,road_ratio=0.5)
-            # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+        # if load_maze_path != "":
+        #     self.maze = np.loadtxt(load_maze_path)
+        # else:
+        #     self.maze = self.generate_robot_map(size=40)
+        #     # self.maze = self.generate_map(size=40,road_ratio=0.5)
+        #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
-        # self.maze = DEFAULT_MAZE
+        self.maze = DEFAULT_MAZE
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
+        nrows, ncols = np.shape(self.maze)
+        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
+        self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()
-
         #To create img and animation
         self.fig = plt.figure()
         plt.grid(True)
@@ -73,27 +75,26 @@ class Maze(object):
 
 
     def reset(self, fix_goal=True, start_pos=None):
-        self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
+        self.terminate_tag = False
         if start_pos != None:
-            self.token_pos = start_pos
+            self.token_pos = start_pos.copy()
         else:
-            self.token_pos = random.choice(self.road_list)
+            self.token_pos = random.choice(self.start_point_list).copy()
 
         self.goal = [-1,-1]
         if fix_goal:
-            self.goal = [0, ncols-1]
+            self.goal = [nrows-1, ncols-1]
         else:
             while self.goal != self.token_pos:
-                self.goal = random.choice(self.road_list)
+                self.goal = random.choice(self.road_list).copy()
+
+        # print(self.token_pos)
         self.move_count = 0
         # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
         self.visited_list = np.zeros(np.shape(self.maze))
         self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
-        # self.visited_set = set()
-        # self.visited_set.add(tuple(self.token_pos))
         self.img_list = []
     
     def move(self, dir):
@@ -116,27 +117,27 @@ class Maze(object):
         if not self.is_valid():
             # print("Invalid!")
             terminate_tag = True
-            reward = -0.8
+            reward = -1.
             self.token_pos = pos_before_move    
         
         elif self.is_block():
             # print("Block!")
             terminate_tag = True
-            reward = -0.8
+            reward = -1.
             self.token_pos = pos_before_move
 
         elif self.is_goal():
             reward = 1.
             goal_tag = terminate_tag = True
 
-        elif self.is_visited(self.token_pos[0],self.token_pos[1]):
-            # print("is_visited!")
-            reward = -0.125
-
-        else:
-            self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
-            # self.visited_set.add(tuple(self.token_pos))
-            # reward = -0.04
+        # elif self.is_visited(self.token_pos[0],self.token_pos[1]):
+        #     # print("is_visited!")
+        #     reward = -0.125
+        #
+        # else:
+        #     self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+        #     # self.visited_set.add(tuple(self.token_pos))
+        #     # reward = -0.04
 
         self.reward_sum += reward
         
@@ -156,12 +157,14 @@ class Maze(object):
         # state[r][c] = 2
         # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
-        #state2: visited_list + token_pos
-        # return (np.append(self.visited_list, self.token_pos)).reshape(1,-1)
+        # state2: token_pos + goal_pos + diff_pos
+        s = np.append(self.token_pos, self.goal)
+        diff = np.subtract(self.goal, self.token_pos)
+        return (np.append(s, diff)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
-        state = np.append(self.token_pos, self.goal)
-        return (np.append(state, self.visited_list)).reshape(1,-1)
+        # state = np.append(self.token_pos, self.goal)
+        # return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
         # state = np.copy(self.maze)
@@ -227,6 +230,10 @@ class Maze(object):
         m = np.copy(self.maze)
         m[x][y] = 2
         print(m)
+
+    def set_start_point(self, dist=1):
+        return [ pos for pos in self.road_list if abs(pos[0]-self.goal[0])<=dist and  abs(pos[1]-self.goal[1])<=dist]
+
 
 
     def generate_robot_map(self, size=10):

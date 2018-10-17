@@ -1,7 +1,7 @@
 import random, sys, os
 import numpy as np
 from maze import Maze, DIR
-from model import default_model
+from model import default_model, deep_model
 from experience_db import ExperienceDB
 from keras import backend as K
 from keras.callbacks import TensorBoard
@@ -37,7 +37,8 @@ class DQN(object):
         if self.load_model_path != "":
             gl.set_model(load_model(self.load_model_path))
         else:
-            gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            # gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
 
         self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
 
@@ -45,6 +46,7 @@ class DQN(object):
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
             self.maze.reset()
+
             s = self.maze.get_state()
             if self.load_model_path != "":
                 dir = self.get_best_action(s)
@@ -164,9 +166,10 @@ class DQN(object):
                             optimal_rate += 1
                         else:
                             diff_count_sum += diff_count
-                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    if not is_goal:
-                        fail_moves += moves_count
+                    break
+
+                if is_terminate or j==self.num_moves_limit-1 or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                    fail_moves += moves_count
                     break
             # self.maze.show_animate()
 
@@ -181,6 +184,8 @@ class DQN(object):
             average_goal_moves = (goal_moves/win_count)
         if (rounds-win_count)!=0:
             average_fail_moves = (fail_moves/(rounds-win_count))
+
+        # print("f:", fail_moves, " g" , goal_moves, " wincount:", win_count, " rounds:", rounds)
 
 
         if is_count_opt:
