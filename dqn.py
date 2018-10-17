@@ -39,17 +39,22 @@ class DQN(object):
         else:
             gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
 
-        self.experience_db = ExperienceDB(self.db_capacity)
+        self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
 
 
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
-            dir = random.randint(0,3)
+            self.maze.reset()
             s = self.maze.get_state()
+            if self.load_model_path != "":
+                dir = self.get_best_action(s)
+            else:
+                dir = random.randint(0,3)
             s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
             transition = [s,dir,r,s_next,is_terminate]
             self.experience_db.add_data(transition)
-    
+
+
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
         return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue
@@ -59,8 +64,6 @@ class DQN(object):
         K.set_value(gl.get_model().optimizer.lr, lr*decay)
     
     def train(self):
-        loss_sum = 0.
-        loss_sum_prev = 0.
         tbCallBack = None
         if self.tensorboard_log_path != "":
             if not os.path.isfile(self.tensorboard_log_path):
@@ -98,15 +101,10 @@ class DQN(object):
                 # history = model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
                 train_loss = gl.get_model().train_on_batch(inputs, answers)
 
-                loss = gl.get_model().evaluate(inputs, answers, verbose=0)
-                loss_sum += loss
-
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     # if is_goal:
                     #     self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
                     break
-
-
 
             # if i%100 == 0:
             #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),

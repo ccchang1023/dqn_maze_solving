@@ -7,15 +7,16 @@ train_params={
     'batch_size' : 8,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 5e-5,
+    'learning_rate' : 1e-5,
     'epochs' : 1000000,
     'num_moves_limit' : 400,
     'rounds_to_test' : 100,
     # 'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
-    # 'load_model_path' : "./saved_model/40x40_lr5e-5_98%.h5",
+    # 'load_model_path' : "./saved_model/ddqn_10k.h5",
     'rounds_to_save_model' : 10000,
     'rounds_to_decay_lr' : 10000,
+    'round_to_update_tModel' : 50,
     'maze_reward_lower_bound' : -0.03*1600,
     'db_capacity': 2000,
     #'tensorboard_log_path' : './log/test/',

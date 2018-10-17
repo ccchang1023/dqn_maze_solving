@@ -1,14 +1,15 @@
 import random
 import numpy as np
 import global_setting as gl
+from collections import deque
 
 
 class ExperienceDB(object):
-    def __init__(self, db_cpacity=1000):
+    def __init__(self, db_cpacity=1000, state_size=0):
         self.capacity = db_cpacity
-        self.data= list()  #list shape: [data_size, 5]
-        self.game_order_data_list = list() #list shape : [data_size, step sum in a game, 5]
+        self.data= deque()  #queue shape: [data_size, 5]
         self.num_of_actions = gl.get_model().output_shape[-1]
+        self.maze_state_size = state_size
 
     """
     Return input, answer
@@ -21,8 +22,7 @@ class ExperienceDB(object):
         if len(self.data) == 0:
             return None, None
         #transitions definition : [state, action, reward, next_state, is_terminate]
-        state_size = self.data[0][0].size #Get 1D state size
-        inputs = np.zeros((batch_size, state_size))
+        inputs = np.zeros((batch_size, self.maze_state_size))
         answers = np.zeros((batch_size, self.num_of_actions))
         # print ("Gamma:", gamma)
         for i,j in enumerate(np.random.choice(len(self.data), batch_size, replace=False)):
@@ -46,8 +46,7 @@ class ExperienceDB(object):
         if len(self.data) == 0:
             return None, None
         # transitions definition : [state, action, reward, next_state, is_terminate]
-        state_size = self.data[0][0].size  # Get 1D state size
-        inputs = np.zeros((batch_size, state_size))
+        inputs = np.zeros((batch_size, self.maze_state_size))
         answers = np.zeros((batch_size, self.num_of_actions))
         # print ("Gamma:", gamma)
         for i, j in enumerate(np.random.choice(len(self.data), batch_size, replace=False)):
@@ -72,24 +71,11 @@ class ExperienceDB(object):
         #transitions = [state, action, reward, next_state, is_terminate]
         self.data.append(transition)
         if len(self.data) > self.capacity:
-            self.pop_data_from_head()
-    
-    def add_game_order_data(self, transition_list=None):
-        self.game_order_data_list.append(transition_list)
-        # print("Current list:")
-        # for i in range(len(self.game_order_data_list)):
-        #     print("Shape of item ", i, " : ", np.shape(self.game_order_data_list[i]))
-        # print("Current order data len:", len(self.game_order_data_list))
-        if(len(self.game_order_data_list) > 100):
-           self.pop_order_data_from_head()
-    
+            self.data.pop()
+
     def pop_data_from_head(self):
         del self.data[0]
-    
-    def pop_order_data_from_head(self):
-        self.game_order_data_list.pop()
 
-    
     def show_data(self):
         for i in self.data:
             print(i, "\n")

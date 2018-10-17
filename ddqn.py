@@ -13,12 +13,12 @@ class DDQN(DQN):
         super(DDQN, self).__init__(**train_params)
         # DQN.__init__(self, train_params)
         gl.init_targetModel()
+        self.round_to_update_tModel = train_params.get("round_to_update_tModel", 100)
 
     def update_target_model(self):
         gl.update_targetModel()
 
     def train(self):
-        loss_sum = 0.
         if self.tensorboard_log_path != "":
             if not os.path.isfile(self.tensorboard_log_path):
                 str = "mkdir " + self.tensorboard_log_path
@@ -41,13 +41,11 @@ class DDQN(DQN):
                 # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
                 train_loss = gl.get_model().train_on_batch(inputs, answers)
 
-                loss = gl.get_model().evaluate(inputs, answers, verbose=0)
-                loss_sum += loss
-
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
-            if i%10 == 0:
+
+            if i%self.round_to_update_tModel == 0:
                 self.update_target_model()
 
             # Decay learning_rate
