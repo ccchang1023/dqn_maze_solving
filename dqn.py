@@ -162,9 +162,10 @@ class DQN(object):
                             optimal_rate += 1
                         else:
                             diff_count_sum += diff_count
-                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    if not is_goal:
-                        fail_moves += moves_count
+                    break
+
+                if is_terminate or j == self.num_moves_limit-1 or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                    fail_moves += moves_count
                     break
             # self.maze.show_animate()
 

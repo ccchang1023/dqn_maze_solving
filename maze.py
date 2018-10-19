@@ -346,7 +346,7 @@ class Maze(object):
         canvas[x,y] = 0.9 # goal cell
         img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
         self.img_list.append([img])
-        plt.show()
+        # plt.show()
         # print("creat")
 
     def gen_animate(self, i):
