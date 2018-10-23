@@ -185,7 +185,9 @@ class DQN(object):
         if (rounds-win_count)!=0:
             average_fail_moves = (fail_moves/(rounds-win_count))
 
-        # print("f:", fail_moves, " g" , goal_moves, " wincount:", win_count, " rounds:", rounds)
+
+        if win_rate >= 80. and len(self.maze.start_pos_list) < len(self.maze.road_list):
+            self.maze.expand_start_pos_area()
 
 
         if is_count_opt:
@@ -198,5 +200,6 @@ class DQN(object):
             output_str = str(" Loss:%f\tWin_rate:%.2f%%\tDiff_count_sum:%d\tAverage gmoves:%.2f\tAverage fmoves:%.2f\tAverage_reward:%.4f"
                              %(loss, win_rate, diff_count_sum, average_goal_moves, average_fail_moves,average_reward))
         print(output_str)
-        
+
+
         

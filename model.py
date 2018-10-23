@@ -33,11 +33,11 @@ def default_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
 def deep_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
     model = Sequential()
-    model.add(Dense(30000, input_shape=(state_size,)))
+    model.add(Dense(50000, input_shape=(state_size,)))
     model.add(PReLU())
     model.add(Dropout(0.2))
 
-    # model.add(Dense(512, ))
+    # model.add(Dense(1024, ))
     # model.add(PReLU())
     # model.add(Dropout(0.2))
 

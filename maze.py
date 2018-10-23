@@ -48,20 +48,29 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=""):
-        # if load_maze_path != "":
-        #     self.maze = np.loadtxt(load_maze_path)
-        # else:
-        #     self.maze = self.generate_robot_map(size=40)
-        #     # self.maze = self.generate_map(size=40,road_ratio=0.5)
-        #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+        if load_maze_path != "":
+            self.maze = np.loadtxt(load_maze_path)
+        else:
+            self.maze = self.generate_robot_map(size=40)
+            # self.maze = self.generate_map(size=40,road_ratio=0.5)
+            # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
-        self.maze = DEFAULT_MAZE
+        # self.maze = DEFAULT_MAZE
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         nrows, ncols = np.shape(self.maze)
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
-        self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
+        # self.goal = [nrows - 1, ncols - 1]  #For 10x10
+        self.goal = [0, ncols - 1]  #For 40x40 robot map
+
+        self.road_list = [[x, y] for x in range(nrows) for y in range(ncols) if self.maze[x, y] == 1 and [x,y]!=self.goal]
+
+        self.start_pos_list = []
+        # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
+        self.start_pos_radius = 1
+        self.expand_start_pos_area()
+
+
         self.reset()
         #To create img and animation
         self.fig = plt.figure()
@@ -80,12 +89,11 @@ class Maze(object):
         if start_pos != None:
             self.token_pos = start_pos.copy()
         else:
-            self.token_pos = random.choice(self.start_point_list).copy()
+            self.token_pos = random.choice(self.start_pos_list).copy()
+            # self.token_pos = random.choice(self.road_list).copy()
 
-        self.goal = [-1,-1]
-        if fix_goal:
-            self.goal = [nrows-1, ncols-1]
-        else:
+
+        if not fix_goal:
             while self.goal != self.token_pos:
                 self.goal = random.choice(self.road_list).copy()
 
@@ -231,9 +239,12 @@ class Maze(object):
         m[x][y] = 2
         print(m)
 
-    def set_start_point(self, dist=1):
-        return [ pos for pos in self.road_list if abs(pos[0]-self.goal[0])<=dist and  abs(pos[1]-self.goal[1])<=dist]
-
+    def expand_start_pos_area(self):
+        self.start_pos_radius += 1
+        r = self.start_pos_radius
+        self.start_pos_list =  [pos for pos in self.road_list if abs(pos[0] - self.goal[0]) <= r and abs(pos[1] - self.goal[1]) <= r]
+        print("Set radius to : ", self.start_pos_radius)
+        print("Set start pos list to : ", self.start_pos_list)
 
 
     def generate_robot_map(self, size=10):
