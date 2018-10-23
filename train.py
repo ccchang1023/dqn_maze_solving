@@ -7,7 +7,7 @@ train_params={
     'batch_size' : 8,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-6,
+    'learning_rate' : 5e-5,
     'epochs' : 1000000,
     'num_moves_limit' : 30,
     'rounds_to_test' : 100,

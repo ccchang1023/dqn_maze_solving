@@ -71,7 +71,7 @@ class ExperienceDB(object):
         #transitions = [state, action, reward, next_state, is_terminate]
         self.data.append(transition)
         if len(self.data) > self.capacity:
-            self.data.pop()
+            self.data.popleft()
 
     def pop_data_from_head(self):
         del self.data[0]
