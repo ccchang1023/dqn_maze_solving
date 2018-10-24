@@ -65,11 +65,11 @@ class Maze(object):
 
         self.road_list = [[x, y] for x in range(nrows) for y in range(ncols) if self.maze[x, y] == 1 and [x,y]!=self.goal]
 
-        self.start_pos_list = []
-        # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
+        # self.start_pos_list = []
+        # self.start_pos_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
+
         self.start_pos_radius = 1
         self.expand_start_pos_area()
-
 
         self.reset()
         #To create img and animation
@@ -101,9 +101,10 @@ class Maze(object):
         self.move_count = 0
         # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
-        self.visited_list = np.zeros(np.shape(self.maze))
+        self.visited_list = np.zeros(np.shape(self.maze), dtype=int)
         self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
         self.img_list = []
+        plt.cla()
     
     def move(self, dir):
         goal_tag = False
@@ -121,8 +122,9 @@ class Maze(object):
             self.token_pos[1] += 1
         else:
             self.token_pos[0] += 1
-            
-        if not self.is_valid():
+
+        x,y = self.token_pos
+        if not self.is_valid(x,y):
             # print("Invalid!")
             terminate_tag = True
             reward = -1.
@@ -141,11 +143,11 @@ class Maze(object):
         # elif self.is_visited(self.token_pos[0],self.token_pos[1]):
         #     # print("is_visited!")
         #     reward = -0.125
-        #
-        # else:
-        #     self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
-        #     # self.visited_set.add(tuple(self.token_pos))
-        #     # reward = -0.04
+
+        else:
+            self.visited_list[x,y] = 1
+            # self.visited_set.add(tuple(self.token_pos))
+            # reward = -0.04
 
         self.reward_sum += reward
         
@@ -192,6 +194,24 @@ class Maze(object):
         # state[r][c] = 2
         # return state.reshape(1,state.shape[0],state.shape[1],1)
 
+    #Return shape : [4,]
+    def get_valid_action_vector(self):
+        x,y = self.token_pos
+        v = np.ones([4,], dtype=int)
+        if self.is_valid(x, y-1) and self.is_visited(x,y-1):
+            v[0] = 0
+
+        if self.is_valid(x-1, y) and self.is_visited(x-1,y):
+            v[1] = 0
+
+        if self.is_valid(x, y+1) and self.is_visited(x,y+1):
+            v[2] = 0
+
+        if self.is_valid(x+1, y) and self.is_visited(x+1,y):
+            v[3] = 0
+
+        return v
+
     def get_num_of_actions(self):
         return self.num_of_actions
 
@@ -221,10 +241,9 @@ class Maze(object):
         r, c = self.token_pos
         return self.maze[r,c] == 0
         
-    def is_valid(self):
-        r, c = self.token_pos
+    def is_valid(self, x, y):
         nrows, ncols = np.shape(self.maze)
-        return not (r < 0 or r >= nrows or c < 0 or c >= ncols)
+        return not (x < 0 or x >= nrows or y < 0 or y >= ncols)
         
     def is_goal(self):
         return self.token_pos == self.goal
@@ -244,7 +263,7 @@ class Maze(object):
         r = self.start_pos_radius
         self.start_pos_list =  [pos for pos in self.road_list if abs(pos[0] - self.goal[0]) <= r and abs(pos[1] - self.goal[1]) <= r]
         print("Set radius to : ", self.start_pos_radius)
-        print("Set start pos list to : ", self.start_pos_list)
+        # print("Set start pos list to : ", self.start_pos_list)
 
 
     def generate_robot_map(self, size=10):
@@ -366,7 +385,7 @@ class Maze(object):
         canvas[x,y] = 0.9 # goal cell
         img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
         self.img_list.append([img])
-        plt.show()
+        # plt.show()
         # print("creat")
 
     def gen_animate(self, i):
@@ -377,7 +396,7 @@ class Maze(object):
         # ani = animation.FuncAnimation(fig=self.fig, func=self.gen_animate, frames=self.move_count, blit=True, interval=70)
         plt.show()
         # ani.save("test.mp4", fps=30, extra_args=['-vcodec', 'libx264'])
-        ani.save("loop.mp4")
+        # ani.save("loop.mp4")
         
 
         

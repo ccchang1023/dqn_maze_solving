@@ -59,7 +59,25 @@ class DQN(object):
 
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
-        return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue
+
+        #Exp : implement argmax manually
+        answer = gl.get_model().predict(state).flatten()
+        v = self.maze.get_valid_action_vector()
+
+        # print("Anser:", answer)
+        # print("V:", v)
+
+        max = -10000
+        idx = -1
+        for i in range(4):
+            if v[i] == 1 and answer[i] > max:
+                max = answer[i]
+                idx = i
+
+        # print("Return:", idx)
+
+        return idx
+        # return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue
         
     def decay_learning_rate(self, decay=0.2):
         lr = K.get_value(gl.get_model().optimizer.lr)
@@ -94,6 +112,10 @@ class DQN(object):
                     keep_playing = False
                 else:
                     dir = self.get_best_action(s)
+
+                if dir == -1:  #All directions has been visited
+                    break
+
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add_data(transition)
@@ -125,29 +147,38 @@ class DQN(object):
         diff_count_sum = 0
         test_input = list()
         test_answer = list()
-        moves_count = 0.
         goal_moves = 0.
         fail_moves = 0.
         average_goal_moves = average_fail_moves = 0
 
+        prev_pos = []
+        prev2_pos = []
+
 
         for i in range(rounds):
             self.maze.reset()
+            prev2_pos = prev_pos = self.maze.token_pos.copy()
             # self.maze.reset(start_pos = [0,6]) #fail loop
             # self.maze.reset(start_pos = [5,5])    #win
             # self.maze.reset(start_pos=[20,3])   #win, optimal
             moves_count = 0.
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
-                # dir = self.get_best_action(s)
-                a = gl.get_model().predict(s)    #With shape (batch, num_actions) -> (1,4)
+                a = gl.get_model().predict(s)
                 dir = np.argmax(a)
 
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 # self.maze.create_img()
-
                 average_reward += r
                 moves_count += 1
+
+                #Break if stuck in loop
+                if self.maze.token_pos == prev2_pos:
+                    fail_moves += moves_count
+                    break
+                else:
+                    prev2_pos = prev_pos.copy()
+                    prev_pos = self.maze.token_pos.copy()
 
                 #Get corresponding x_test and y_test
                 if is_terminate:
@@ -171,7 +202,8 @@ class DQN(object):
                 if is_terminate or j==self.num_moves_limit-1 or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     fail_moves += moves_count
                     break
-            # self.maze.show_animate()
+
+        # self.maze.show_animate()
 
         test_input = np.squeeze(np.array(test_input), axis=1) #Transfer shape from [batch, 1, pixels] to [batch, pixels]
         test_answer  = np.squeeze(np.array(test_answer), axis=1) # Transfer shape from [batch, 1, 4] to [batch, 4]
@@ -186,10 +218,6 @@ class DQN(object):
             average_fail_moves = (fail_moves/(rounds-win_count))
 
 
-        if win_rate >= 80. and len(self.maze.start_pos_list) < len(self.maze.road_list):
-            self.maze.expand_start_pos_area()
-
-
         if is_count_opt:
             optimal_rate = (optimal_rate/rounds)*100
             output_str = str(" Loss:%f\tWin_rate:%.2f%%\tOptimal_solution_rate:%.2f%%\t"
@@ -202,4 +230,6 @@ class DQN(object):
         print(output_str)
 
 
+        if win_rate >= 80. and len(self.maze.start_pos_list) < len(self.maze.road_list):
+            self.maze.expand_start_pos_area()
         

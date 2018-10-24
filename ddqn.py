@@ -35,6 +35,10 @@ class DDQN(DQN):
                     dir = np.random.randint(0, 3)
                 else:
                     dir = self.get_best_action(s)
+
+                if dir == -1:
+                    break
+
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s, dir, r, s_next, is_terminate]
                 self.experience_db.add_data(transition)
@@ -42,14 +46,14 @@ class DDQN(DQN):
                 # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
                 train_loss = gl.get_model().train_on_batch(inputs, answers)
 
-                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    break
-
                 #Update target model
                 step += 1
                 if step % self.steps_to_update_tModel == 0:
                     self.update_target_model()
                     step = 0
+
+                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                    break
 
 
             # Decay learning_rate
