@@ -13,7 +13,7 @@ class DDQN(DQN):
         super(DDQN, self).__init__(**train_params)
         # DQN.__init__(self, train_params)
         gl.init_targetModel()
-        self.round_to_update_tModel = train_params.get("round_to_update_tModel", 100)
+        self.step_to_update_tModel = train_params.get("step_to_update_tModel", 100)
 
     def update_target_model(self):
         gl.update_targetModel()
@@ -24,10 +24,10 @@ class DDQN(DQN):
                 str = "mkdir " + self.tensorboard_log_path
                 os.system(str)
 
+        step = 0
         for i in range(self.epochs):
             self.maze.reset()
             # print("Epoch:%d" %(i))
-
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
                 if random.random() <= self.epsilon:
@@ -44,9 +44,12 @@ class DDQN(DQN):
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
+                #Update target model
+                step += 1
+                if step%self.step_to_update_tModel == 0:
+                    step = 0
+                    self.update_target_model()
 
-            if i%self.round_to_update_tModel == 0:
-                self.update_target_model()
 
             # Decay learning_rate
             if i % self.rounds_to_decay_lr == 0 and i != 0:

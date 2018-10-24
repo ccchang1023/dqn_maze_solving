@@ -37,8 +37,8 @@ class DQN(object):
         if self.load_model_path != "":
             gl.set_model(load_model(self.load_model_path))
         else:
-            # gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
-            gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            # gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
 
         self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
 
@@ -133,6 +133,8 @@ class DQN(object):
 
         for i in range(rounds):
             self.maze.reset()
+            prev_pos = prev2_pos = self.maze.token_pos.copy()
+
             # self.maze.reset(start_pos = [0,6]) #fail loop
             # self.maze.reset(start_pos = [5,5])    #win
             # self.maze.reset(start_pos=[20,3])   #win, optimal
@@ -148,6 +150,15 @@ class DQN(object):
 
                 average_reward += r
                 moves_count += 1
+
+                #prevent from stucking in fail loop
+                if(self.maze.token_pos == prev2_pos):
+                    # print("Loop!")
+                    fail_moves += moves_count
+                    break
+                prev2_pos = prev_pos.copy()
+                prev_pos = self.maze.token_pos.copy()
+
 
                 #Get corresponding x_test and y_test
                 if is_terminate:
