@@ -1,7 +1,7 @@
 from __future__ import print_function
-from dqn import DQN
-from ddqn import DDQN
-
+# from dqn import DQN
+# from ddqn import DDQN
+from search_agent import SEARCH_AGENT
 
 train_params={
     'batch_size' : 8,
@@ -23,6 +23,14 @@ train_params={
     'Model_type': "dense",
 }
 
+search_params={
+    'algorithm' : "Astar",
+    'depth' : 40,
+    "maze_type" : "10x10",
+}
+
+
+
 def main():
 
     # dqn = DQN(**train_params)
@@ -32,12 +40,18 @@ def main():
     # print("Start training")
     # dqn.train()
 
-    ddqn = DDQN(**train_params)
-    initial_rounds = 300
-    print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_dataset(initial_rounds)
-    print("Start training")
-    ddqn.train()
+    # ddqn = DDQN(**train_params)
+    # initial_rounds = 300
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # ddqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # ddqn.train()
+
+    sa = SEARCH_AGENT(**search_params)
+    sa.search()
+
+
+
 
     
 if __name__ == "__main__":
