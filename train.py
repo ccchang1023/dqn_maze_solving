@@ -25,19 +25,19 @@ train_params={
 
 def main():
 
-    # dqn = DQN(**train_params)
-    # initial_rounds = 300
-    # print ("Initial dataset:", initial_rounds, " rounds")
-    # dqn.initial_dataset(initial_rounds)
-    # print("Start training")
-    # dqn.train()
-
-    ddqn = DDQN(**train_params)
+    dqn = DQN(**train_params)
     initial_rounds = 300
     print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_dataset(initial_rounds)
+    dqn.initial_dataset(initial_rounds)
     print("Start training")
-    ddqn.train()
+    dqn.train()
+
+    # ddqn = DDQN(**train_params)
+    # initial_rounds = 300
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # ddqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # ddqn.train()
 
     
 if __name__ == "__main__":

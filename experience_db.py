@@ -36,6 +36,7 @@ class ExperienceDB(object):
             else:
                 qvalue_next = np.max(gl.get_model().predict(next_state)) #get max qvalue
                 answers[i][dir] = reward + (gamma*qvalue_next)
+
         #For Conv2D input
         # _, r, c, _ = state.shape
         # inputs = inputs.reshape(batch_size,r,c,1)
