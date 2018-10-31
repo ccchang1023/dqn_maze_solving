@@ -25,7 +25,7 @@ train_params={
 
 search_params={
     'algorithm' : "Astar",
-    'depth' : 40,
+    'depth' : 45,
     "maze_type" : "10x10",
 }
 

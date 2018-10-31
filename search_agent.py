@@ -2,7 +2,7 @@ import numpy as np
 import os, random, copy,math
 from collections import deque
 from heapq import heappush, heappop
-from maze import generate_robot_map, TEST_MAZE, DEFAULT_MAZE
+from maze import generate_robot_map, TEST_MAZE, DEFAULT_MAZE, generate_map
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,7 +35,8 @@ class SEARCH_AGENT(object):
         self.answer_path = deque()
 
         # self.maze = generate_robot_map()
-        self.maze = DEFAULT_MAZE
+        self.maze = generate_map(size=30, road_ratio=0.4)
+        # self.maze = DEFAULT_MAZE
         # self.maze = TEST_MAZE
 
 
@@ -46,7 +47,6 @@ class SEARCH_AGENT(object):
         self.visited_table = np.zeros([nrows, ncols], dtype=int)
         x,y = self.pos
         self.visited_table[x,y] = 1
-
 
         self.fig = plt.figure()
         plt.grid(True)
@@ -70,7 +70,7 @@ class SEARCH_AGENT(object):
 
 
         elif self.algorithm == 'bfs':
-            self.bfs()
+            self.bfs(root)
 
 
         elif self.algorithm == 'Astar':
@@ -120,8 +120,34 @@ class SEARCH_AGENT(object):
             self.visited_table[x, y] = 0
         return False
 
-    def bfs(self):
-        return
+    def bfs(self, node):
+        q = deque()
+        q.append(node)
+        farest_dist = 0
+
+        while len(q) != 0:
+            node = q.popleft()
+            if node.move_count > farest_dist:
+                farest_dist = node.move_count
+                print("Farest dist:", farest_dist)
+
+            if node.pos == self.goal:
+                print("Find goal!")
+                ans = []
+                while node.parent!=None:
+                    ans.append(node.pos)
+                    node = node.parent
+                ans.reverse()
+                print(ans)
+                return True
+            x,y = node.pos
+            self.visited_table[x,y] = 1
+            successor = self.get_successor(node, self.visited_table, node.move_count)
+            for n in successor:
+                n.parent = node
+                q.append(n)
+
+        return False
 
     def Astar(self, node):
 
