@@ -57,9 +57,8 @@ class Maze(object):
         #     # self.maze = self.generate_map(size=40,road_ratio=0.5)
         #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
-        # self.maze = DEFAULT_MAZE
-
-        self.maze = TEST_MAZE
+        self.maze = DEFAULT_MAZE
+        # self.maze = TEST_MAZE
 
         print(self.maze)
         self.num_of_actions = num_of_actions
@@ -101,6 +100,8 @@ class Maze(object):
         self.reward_sum = 0.
         self.visited_list = np.zeros(np.shape(self.maze))
         self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
+        # self.visited_set = set()
+
         self.img_list = []
         plt.cla()
     
@@ -185,13 +186,17 @@ class Maze(object):
         # state = np.append(state, self.reward_sum).astype(float)
         # return state.reshape(1,-1)
 
-        #State5: For conv2d, maze+valid, return shape=(1,row, col, 1)
+        #State5: For conv2d, maze+valid, return shape=(1,row, col, 1) , Normalize value from 0~1
+        #0->block, 1->road, 2->token_pos, 3->goal, 4->visited
         # state = np.copy(self.maze)
-        # for r,c in self.visited_set:
-        #     state[r][c] = 4
-        # r,c = self.token_pos
-        # state[r][c] = 2
-        # return state.reshape(1,state.shape[0],state.shape[1],1)
+        # for x,y in self.visited_set:
+        #     state[x][y] = 4
+        # x, y = self.token_pos
+        # state[x][y] = 2
+        # x, y = self.goal
+        # state[x][y] = 3
+        # return state.reshape(1,state.shape[0],state.shape[1],1)*0.2
+
 
     def get_num_of_actions(self):
         return self.num_of_actions
@@ -373,8 +378,6 @@ def generate_robot_map(size=40):
     set_block(m, (10, 32), 8, 8)
     return m
 
-        
-        
         
         
     

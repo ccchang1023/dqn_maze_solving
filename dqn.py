@@ -1,7 +1,7 @@
 import random, sys, os
 import numpy as np
 from maze import Maze, DIR
-from model import default_model, deep_model
+from model import default_model, deep_model, conv2d_model, dueldqn_model
 from experience_db import ExperienceDB
 from keras import backend as K
 from keras.callbacks import TensorBoard
@@ -37,8 +37,12 @@ class DQN(object):
         if self.load_model_path != "":
             gl.set_model(load_model(self.load_model_path))
         else:
+            #For conv2d
+            # input_shape = np.shape(self.maze.get_state())
+            # gl.set_model(conv2d_model(self.learning_rate, input_shape, self.maze.get_num_of_actions()))
             gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
             # gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            # gl.set_model(dueldqn_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
 
         self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
 
@@ -73,16 +77,14 @@ class DQN(object):
                 os.system(str)
             tbCallBack = TensorBoard(log_dir=self.tensorboard_log_path, histogram_freq=0,
                                                  write_graph=False, write_images=True)
-        
+
+        prev_winrate_sum = -1.
+        winrate_sum = 0.
+
         for i in range(self.epochs):
             self.maze.reset()
 
             # print("Epoch:%d" %(i))
-
-            # Decay learning_rate
-            if i % self.rounds_to_decay_lr == 0 and i!=0 :
-                self.decay_learning_rate()
-                print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
 
             keep_playing = False
             transition_list = list()
@@ -113,7 +115,20 @@ class DQN(object):
             #           self.maze.get_reward_sum(), loss))
             if i % 100 == 0:
                 sys.stdout.write("Epochs:%d" %(i))
-                self.test(self.rounds_to_test)
+                winrate_sum += self.test(self.rounds_to_test)
+
+            # Decay learning_rate
+            # if i%1000 == 0:
+            #     if winrate_sum <= prev_winrate_sum:
+            #         self.decay_learning_rate(decay=0.5)
+            #         print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+            #     prev_winrate_sum = winrate_sum
+            #     winrate_sum = 0.
+
+            if i % self.rounds_to_decay_lr == 0 and i!=0 :
+                self.decay_learning_rate()
+                print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+                winrate_sum = 0.
 
             if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
                 gl.get_model().save(self.saved_model_path)
@@ -210,4 +225,4 @@ class DQN(object):
                              %(loss, win_rate, diff_count_sum, average_goal_moves, average_fail_moves,average_reward))
         print(output_str)
         
-        
+        return win_rate

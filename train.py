@@ -1,7 +1,8 @@
 from __future__ import print_function
-# from dqn import DQN
-# from ddqn import DDQN
 from search_agent import SEARCH_AGENT
+from dqn import DQN
+from ddqn import DDQN
+from dueldqn import DUELDQN
 
 train_params={
     'batch_size' : 8,
@@ -47,11 +48,15 @@ def main():
     # print("Start training")
     # ddqn.train()
 
-    sa = SEARCH_AGENT(**search_params)
-    sa.search()
+    # sa = SEARCH_AGENT(**search_params)
+    # sa.search()
 
-
-
+    dqn = DUELDQN(**train_params)
+    initial_rounds = 300
+    print ("Initial dataset:", initial_rounds, " rounds")
+    dqn.initial_dataset(initial_rounds)
+    print("Start training")
+    dqn.train()
 
     
 if __name__ == "__main__":
