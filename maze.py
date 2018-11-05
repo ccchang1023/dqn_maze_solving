@@ -1,15 +1,18 @@
 from __future__ import print_function
 import os, sys, time, datetime, json, random
 import numpy as np
-# from keras.models import Sequential
-# from keras.layers.core import Dense, Activation
-# from keras.optimizers import SGD , Adam, RMSprop
-# from keras.layers import ReLU
-# from keras.layers.advanced_activations import LeakyReLU, PReLU
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from enum import Enum
+
+TEST_MAZE = np.array([
+    [ 1,  0,  1,  1,  1],
+    [ 1,  1,  1,  1,  1],
+    [ 1,  1,  1,  1,  1],
+    [ 0,  0,  1,  0,  0],
+    [ 1,  1,  1,  1,  1],
+])
 
 DEFAULT_MAZE = np.array([
     [ 1,  0,  1,  1,  1,  1,  1,  1,  1,  1],
@@ -38,7 +41,6 @@ DEFAULT_MAZE_ANSWER = np.array([
 ]) 
 
 
-
 class DIR(Enum):
     LEFT = 0
     UP = 1
@@ -48,17 +50,28 @@ class DIR(Enum):
 
 class Maze(object):
     def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=""):
-        if load_maze_path != "":
-            self.maze = np.loadtxt(load_maze_path)
-        else:
-            self.maze = self.generate_robot_map(size=40)
-            # self.maze = self.generate_map(size=40,road_ratio=0.5)
-            np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+        # if load_maze_path != "":
+        #     self.maze = np.loadtxt(load_maze_path)
+        # else:
+        #     self.maze = self.generate_robot_map(size=40)
+        #     # self.maze = self.generate_map(size=40,road_ratio=0.5)
+        #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
+
+        # self.maze = DEFAULT_MAZE
+
+        self.maze = TEST_MAZE
+
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
-        self.reset()
+        nrows, ncols = np.shape(self.maze)
 
+        self.goal = [0 , ncols - 1] #For 40x40 robot maze
+        # self.goal = [nrows-1, ncols-1] #For 10x10 maze
+
+        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
+        # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
+        self.reset()
         #To create img and animation
         self.fig = plt.figure()
         plt.grid(True)
@@ -71,28 +84,25 @@ class Maze(object):
 
 
     def reset(self, fix_goal=True, start_pos=None):
-        self.terminate_tag = False
         nrows, ncols = np.shape(self.maze)
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1]
+        self.terminate_tag = False
         if start_pos != None:
-            self.token_pos = start_pos
+            self.token_pos = start_pos.copy()
         else:
-            self.token_pos = random.choice(self.road_list)
+            self.token_pos = random.choice(self.road_list).copy()
 
-        self.goal = [-1,-1]
-        if fix_goal:
-            self.goal = [0, ncols-1]
-        else:
+        if not fix_goal:
             while self.goal != self.token_pos:
-                self.goal = random.choice(self.road_list)
+                self.goal = random.choice(self.road_list).copy()
+
+        # print(self.token_pos)
         self.move_count = 0
         # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
         self.visited_list = np.zeros(np.shape(self.maze))
         self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
-        # self.visited_set = set()
-        # self.visited_set.add(tuple(self.token_pos))
         self.img_list = []
+        plt.cla()
     
     def move(self, dir):
         goal_tag = False
@@ -110,17 +120,19 @@ class Maze(object):
             self.token_pos[1] += 1
         else:
             self.token_pos[0] += 1
-            
-        if not self.is_valid():
+
+        x,y = self.token_pos
+
+        if not self.is_valid(x,y):
             # print("Invalid!")
             terminate_tag = True
-            reward = -0.8
+            reward = -1.
             self.token_pos = pos_before_move    
         
-        elif self.is_block():
+        elif self.is_block(x,y):
             # print("Block!")
             terminate_tag = True
-            reward = -0.8
+            reward = -1.
             self.token_pos = pos_before_move
 
         elif self.is_goal():
@@ -154,8 +166,10 @@ class Maze(object):
         # state[r][c] = 2
         # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
-        #state2: visited_list + token_pos
-        # return (np.append(self.visited_list, self.token_pos)).reshape(1,-1)
+        # state2: token_pos + goal_pos + diff_pos
+        # s = np.append(self.token_pos, self.goal)
+        # diff = np.subtract(self.goal, self.token_pos)
+        # return (np.append(s, diff)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
         state = np.append(self.token_pos, self.goal)
@@ -204,14 +218,12 @@ class Maze(object):
         return diff
         # print("Moves:%d Answer:%d Diff:%d" %(move_count, optimal_move_count, diff))
     
-    def is_block(self):
-        r, c = self.token_pos
-        return self.maze[r,c] == 0
+    def is_block(self, x, y):
+        return self.maze[x,y] == 0
         
-    def is_valid(self):
-        r, c = self.token_pos
+    def is_valid(self, x, y):
         nrows, ncols = np.shape(self.maze)
-        return not (r < 0 or r >= nrows or c < 0 or c >= ncols)
+        return not (x < 0 or y >= nrows or c < 0 or c >= ncols)
         
     def is_goal(self):
         return self.token_pos == self.goal
@@ -226,34 +238,8 @@ class Maze(object):
         m[x][y] = 2
         print(m)
 
-
-    def generate_robot_map(self, size=10):
-        m = np.ones([size,size], dtype=int)
-        w1 = h1 = size * 0.3
-        w2 = h2 = size * 0.2
-        self.set_block(m, (5,4), 6, 9)
-        self.set_block(m, (15,2), 4, 16)
-        self.set_block(m, (30,6), 8, 8)
-
-        self.set_block(m, (4, 22), 4, 16)
-        self.set_block(m, (0, 15), 4, 30)
-        self.set_block(m, (30, 20), 8, 8)
-        self.set_block(m, (20, 30), 6, 9)
-        self.set_block(m, (10, 32), 8, 8)
-        return m
-
-    def set_block(self, maze, center, h, w):
-        # Area will be (center.x+h) * (center.y+w)
-        tmp = np.copy(maze)
-        for i in range(center[0], center[0]+w):
-            for j in range(center[1], center[1]+h):
-                if maze[i][j] == 0:
-                    print("Set block failed on :", i ,"  ", j)
-                    maze = tmp
-                    return False
-                maze[i][j] = 0
-        return True
-
+    def set_start_point(self, dist=1):
+        return [ pos for pos in self.road_list if abs(pos[0]-self.goal[0])<=dist and  abs(pos[1]-self.goal[1])<=dist]
 
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
@@ -347,7 +333,6 @@ class Maze(object):
         img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
         self.img_list.append([img])
         # plt.show()
-        # print("creat")
 
     def gen_animate(self, i):
         return self.img_list[i]
@@ -358,7 +343,35 @@ class Maze(object):
         plt.show()
         # ani.save("test.mp4", fps=30, extra_args=['-vcodec', 'libx264'])
         ani.save("loop.mp4")
-        
+
+
+
+def set_block(maze, center, h, w):
+    # Area will be (center.x+h) * (center.y+w)
+    tmp = np.copy(maze)
+    for i in range(center[0], center[0]+w):
+        for j in range(center[1], center[1]+h):
+            if maze[i][j] == 0:
+                print("Set block failed on :", i ,"  ", j)
+                maze = tmp
+                return False
+            maze[i][j] = 0
+    return True
+
+def generate_robot_map(size=40):
+    m = np.ones([size,size], dtype=int)
+    w1 = h1 = size * 0.3
+    w2 = h2 = size * 0.2
+    set_block(m, (5,4), 6, 9)
+    set_block(m, (15,2), 4, 16)
+    set_block(m, (30,6), 8, 8)
+
+    set_block(m, (4, 22), 4, 16)
+    set_block(m, (0, 15), 4, 30)
+    set_block(m, (30, 20), 8, 8)
+    set_block(m, (20, 30), 6, 9)
+    set_block(m, (10, 32), 8, 8)
+    return m
 
         
         
