@@ -1,6 +1,7 @@
 from __future__ import print_function
 from dqn import DQN
 from ddqn import DDQN
+from dueldqn import DUELDQN
 
 
 train_params={
@@ -25,12 +26,12 @@ train_params={
 
 def main():
 
-    dqn = DQN(**train_params)
-    initial_rounds = 300
-    print ("Initial dataset:", initial_rounds, " rounds")
-    dqn.initial_dataset(initial_rounds)
-    print("Start training")
-    dqn.train()
+    # dqn = DQN(**train_params)
+    # initial_rounds = 300
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # dqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # dqn.train()
 
     # ddqn = DDQN(**train_params)
     # initial_rounds = 300
@@ -38,6 +39,13 @@ def main():
     # ddqn.initial_dataset(initial_rounds)
     # print("Start training")
     # ddqn.train()
+
+    dqn = DUELDQN(**train_params)
+    initial_rounds = 300
+    print ("Initial dataset:", initial_rounds, " rounds")
+    dqn.initial_dataset(initial_rounds)
+    print("Start training")
+    dqn.train()
 
     
 if __name__ == "__main__":
