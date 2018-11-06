@@ -24,4 +24,5 @@ def get_targetModel():
 def update_targetModel():
     global model
     global targetModel
+    # print("Cloning model...")
     targetModel.set_weights(model.get_weights())

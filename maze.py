@@ -259,6 +259,15 @@ class Maze(object):
     def set_start_point(self, dist=1):
         return [ pos for pos in self.road_list if abs(pos[0]-self.goal[0])<=dist and  abs(pos[1]-self.goal[1])<=dist]
 
+    def get_move_count(self):
+        return self.move_count
+
+    def get_token_pos(self):
+        return self.token_pos
+
+    def get_reward_sum(self):
+        return self.reward_sum
+
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
         
@@ -350,31 +359,42 @@ class Maze(object):
         if (abs(4-x)+abs(4-gx)) < (abs(36-x)+abs(36-gx)):
             while x > 4:
                 x -= 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(1)
             while y < gy:
                 y += 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(2)
             while x < gx:
                 x += 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(3)
         else:
             while x < 36:
                 x += 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(3)
             while y < gy:
                 y += 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(2)
             while x > gx:
                 x -= 1
-                # pos_list.append([x,y])
+                pos_list.append([x,y])
                 dir_list.append(1)
 
         return pos_list, dir_list
+
+
+    def set_move_count(self, n):
+        self.move_count = n
+
+    def set_token_pos(self, pos):
+        self.token_pos = pos
+
+    def set_reward_sum(self, r):
+        self.reward_sum = r
+
 
     def create_img(self):
         nrows, ncols = np.shape(self.maze)

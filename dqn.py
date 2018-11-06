@@ -55,17 +55,6 @@ class DQN(object):
             transition = [s,d,r,s_next,is_terminate]
             self.experience_db.add_data(transition)
 
-    def initial_sol_dataset(self, n_rounds):
-        for _ in range(n_rounds):
-            self.maze.reset()
-            pos_list,dir_list = self.maze.get_opt_path()
-            for d in dir_list:
-                s = self.maze.get_state()
-                s_next, r, is_goal, is_terminate = self.maze.move(DIR(d))
-                transition = [s,d,r,s_next,is_terminate]
-                self.experience_db.add_solution_data(transition)
-                # print(transition)
-
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
         return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue
@@ -126,6 +115,7 @@ class DQN(object):
                 sys.stdout.write("Epochs:%d" %(i))
                 winrate_sum += self.test(self.rounds_to_test)
 
+            #Reset Solution data
             if i % 100 == 0:
                 self.initial_sol_dataset(50)
 
