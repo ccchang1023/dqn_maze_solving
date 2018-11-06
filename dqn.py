@@ -38,28 +38,33 @@ class DQN(object):
             gl.set_model(load_model(self.load_model_path))
         else:
             #For conv2d
-            # input_shape = np.shape(self.maze.get_state())
+                # input_shape = np.shape(self.maze.get_state())
             # gl.set_model(conv2d_model(self.learning_rate, input_shape, self.maze.get_num_of_actions()))
-            gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
-            # gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            # gl.set_model(default_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
+            gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
             # gl.set_model(dueldqn_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
-
         self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
 
 
     def initial_dataset(self, n_rounds):
         for _ in range(n_rounds):
             self.maze.reset()
-
             s = self.maze.get_state()
-            if self.load_model_path != "":
-                dir = self.get_best_action(s)
-            else:
-                dir = random.randint(0,3)
-            s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-            transition = [s,dir,r,s_next,is_terminate]
+            d = np.argmax(gl.get_model().predict(s))
+            s_next, r, is_goal, is_terminate = self.maze.move(DIR(d))
+            transition = [s,d,r,s_next,is_terminate]
             self.experience_db.add_data(transition)
 
+    def initial_sol_dataset(self, n_rounds):
+        for _ in range(n_rounds):
+            self.maze.reset()
+            pos_list,dir_list = self.maze.get_opt_path()
+            for d in dir_list:
+                s = self.maze.get_state()
+                s_next, r, is_goal, is_terminate = self.maze.move(DIR(d))
+                transition = [s,d,r,s_next,is_terminate]
+                self.experience_db.add_solution_data(transition)
+                # print(transition)
 
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
@@ -77,29 +82,31 @@ class DQN(object):
                 os.system(str)
             tbCallBack = TensorBoard(log_dir=self.tensorboard_log_path, histogram_freq=0,
                                                  write_graph=False, write_images=True)
-
-        prev_winrate_sum = -1.
-        winrate_sum = 0.
+        prev_winrate_sum = winrate_sum = 0.
 
         for i in range(self.epochs):
             self.maze.reset()
-
             # print("Epoch:%d" %(i))
-
-            keep_playing = False
-            transition_list = list()
+            dir = pre_dir = None
 
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
-                if keep_playing or random.random() <= self.epsilon:
+                if random.random() <= self.epsilon:
                     dir = np.random.randint(0, 3)
-                    keep_playing = False
                 else:
-                    dir = self.get_best_action(s)
+                    # dir = self.get_best_action(s)
+                    Q_list = gl.get_model().predict(s)
+                    dir = np.argmax(Q_list)
+                    #Avoid the loop
+                    # if dir == self.maze.get_opposite_dir(pre_dir):
+                    #     Q_list = np.delete(Q_list, dir)
+                    #     dir = np.argmax(Q_list)
+
+                pre_dir = dir
+
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add_data(transition)
-                # transition_list.append(transition)  #Collect game data in playing order
                 # self.maze.create_img()
                 inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
                 # history = model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
@@ -108,6 +115,8 @@ class DQN(object):
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     # if is_goal:
                     #     self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
+                    # if i%100==0 and i!=0:
+                    #     self.maze.show_animate()
                     break
 
             # if i%100 == 0:
@@ -117,18 +126,21 @@ class DQN(object):
                 sys.stdout.write("Epochs:%d" %(i))
                 winrate_sum += self.test(self.rounds_to_test)
 
-            # Decay learning_rate
-            # if i%1000 == 0:
-            #     if winrate_sum <= prev_winrate_sum:
-            #         self.decay_learning_rate(decay=0.5)
-            #         print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
-            #     prev_winrate_sum = winrate_sum
-            #     winrate_sum = 0.
+            if i % 100 == 0:
+                self.initial_sol_dataset(50)
 
-            if i % self.rounds_to_decay_lr == 0 and i!=0 :
-                self.decay_learning_rate()
-                print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+            # Decay learning_rate
+            if i%1000 == 0:
+                if winrate_sum < prev_winrate_sum:
+                    self.decay_learning_rate(decay=0.5)
+                    print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+                prev_winrate_sum = winrate_sum
                 winrate_sum = 0.
+
+            # if i % self.rounds_to_decay_lr == 0 and i!=0 :
+            #     self.decay_learning_rate()
+            #     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+            #     winrate_sum = 0.
 
             if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
                 gl.get_model().save(self.saved_model_path)
@@ -144,7 +156,6 @@ class DQN(object):
         goal_moves = 0.
         fail_moves = 0.
         average_goal_moves = average_fail_moves = 0
-
 
         for i in range(rounds):
             self.maze.reset()
@@ -174,7 +185,6 @@ class DQN(object):
                 prev2_pos = prev_pos.copy()
                 prev_pos = self.maze.token_pos.copy()
 
-
                 #Get corresponding x_test and y_test
                 if is_terminate:
                     a[0][dir] = r + self.gamma*np.max(gl.get_model().predict(s_next))
@@ -194,7 +204,7 @@ class DQN(object):
                             diff_count_sum += diff_count
                     break
 
-               if is_terminate or j==self.num_moves_limit-1 or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
+                if is_terminate or j==self.num_moves_limit-1 or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     fail_moves += moves_count
                     break
             # self.maze.show_animate()

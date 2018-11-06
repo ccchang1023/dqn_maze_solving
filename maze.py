@@ -57,8 +57,9 @@ class Maze(object):
         #     # self.maze = self.generate_map(size=40,road_ratio=0.5)
         #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
-        self.maze = DEFAULT_MAZE
-        # self.maze = TEST_MAZE
+        # self.maze = DEFAULT_MAZE
+        self.maze = generate_block_map(size=40)
+        np.savetxt('40x40Maze_20181102', self.maze, fmt='%1.0f')
 
         print(self.maze)
         self.num_of_actions = num_of_actions
@@ -82,19 +83,31 @@ class Maze(object):
         ax.set_yticklabels([])
 
 
-    def reset(self, fix_goal=True, start_pos=None):
+    def reset(self, start_pos=None, goal=None):
         nrows, ncols = np.shape(self.maze)
         self.terminate_tag = False
-        if start_pos != None:
-            self.token_pos = start_pos.copy()
+        if start_pos == None:
+            # self.token_pos = random.choice(self.road_list).copy()
+            # Supervised learning version
+            x = np.random.randint(0, 40)
+            y = np.random.randint(0, 5)
+            self.token_pos = [x, y]
         else:
-            self.token_pos = random.choice(self.road_list).copy()
+            self.token_pos = start_pos.copy()
 
-        if not fix_goal:
-            while self.goal != self.token_pos:
-                self.goal = random.choice(self.road_list).copy()
+        if goal==None:
+            # while self.goal != self.token_pos:
+            #     self.goal = random.choice(self.road_list).copy()
+            # Supervised learning version
+            x = np.random.randint(0, 40)
+            y = np.random.randint(35, 40)
+            self.goal = [x, y]
+        else:
+            self.goal = goal.copy()
 
-        # print(self.token_pos)
+        # print("Start: ", self.token_pos)
+        # print("Goal: ", self.goal)
+
         self.move_count = 0
         # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
@@ -140,14 +153,14 @@ class Maze(object):
             reward = 1.
             goal_tag = terminate_tag = True
 
-        elif self.is_visited(self.token_pos[0],self.token_pos[1]):
+        # elif self.is_visited(self.token_pos[0],self.token_pos[1]):
             # print("is_visited!")
-            reward = -0.125
+            # reward = -0.125
 
-        else:
-            self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+        # else:
+            # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             # self.visited_set.add(tuple(self.token_pos))
-            # reward = -0.04
+            # reward = -0.01
 
         self.reward_sum += reward
         
@@ -168,13 +181,13 @@ class Maze(object):
         # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
         # state2: token_pos + goal_pos + diff_pos
-        # s = np.append(self.token_pos, self.goal)
-        # diff = np.subtract(self.goal, self.token_pos)
-        # return (np.append(s, diff)).reshape(1,-1)
+        s = np.append(self.token_pos, self.goal)
+        diff = abs(np.subtract(self.goal, self.token_pos))
+        return (np.append(s, diff)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
-        state = np.append(self.token_pos, self.goal)
-        return (np.append(state, self.visited_list)).reshape(1,-1)
+        # state = np.append(self.token_pos, self.goal)
+        # return (np.append(state, self.visited_list)).reshape(1,-1)
         
         #state4: maze + move_count + reward_sum
         # state = np.copy(self.maze)
@@ -228,7 +241,7 @@ class Maze(object):
         
     def is_valid(self, x, y):
         nrows, ncols = np.shape(self.maze)
-        return not (x < 0 or y >= nrows or c < 0 or c >= ncols)
+        return not (x < 0 or x >= nrows or y < 0 or y >= ncols)
         
     def is_goal(self):
         return self.token_pos == self.goal
@@ -322,7 +335,47 @@ class Maze(object):
                 nb.append([r,c])
         return nb
 
-        
+
+    def get_opposite_dir(self, d):
+        return None if d == None else (d+2) % 4
+
+    #Return the list of DIR which leads to the goal in optimal path
+    def get_opt_path(self):
+        pos_list = []
+        dir_list = []
+        x,y = self.token_pos
+        gx,gy = self.goal
+
+        #Move UP in first step is better:
+        if (abs(4-x)+abs(4-gx)) < (abs(36-x)+abs(36-gx)):
+            while x > 4:
+                x -= 1
+                # pos_list.append([x,y])
+                dir_list.append(1)
+            while y < gy:
+                y += 1
+                # pos_list.append([x,y])
+                dir_list.append(2)
+            while x < gx:
+                x += 1
+                # pos_list.append([x,y])
+                dir_list.append(3)
+        else:
+            while x < 36:
+                x += 1
+                # pos_list.append([x,y])
+                dir_list.append(3)
+            while y < gy:
+                y += 1
+                # pos_list.append([x,y])
+                dir_list.append(2)
+            while x > gx:
+                x -= 1
+                # pos_list.append([x,y])
+                dir_list.append(1)
+
+        return pos_list, dir_list
+
     def create_img(self):
         nrows, ncols = np.shape(self.maze)
         canvas = np.copy(self.maze).astype(float)
@@ -347,7 +400,7 @@ class Maze(object):
         # ani = animation.FuncAnimation(fig=self.fig, func=self.gen_animate, frames=self.move_count, blit=True, interval=70)
         plt.show()
         # ani.save("test.mp4", fps=30, extra_args=['-vcodec', 'libx264'])
-        ani.save("loop.mp4")
+        ani.save("training_observation.mp4")
 
 
 
@@ -378,7 +431,37 @@ def generate_robot_map(size=40):
     set_block(m, (10, 32), 8, 8)
     return m
 
-        
+def generate_block_map(size=40):
+    m = np.ones([size,size], dtype=int)
+    set_block(m,(5,5), 30, 30,)
+    return m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
     
         
