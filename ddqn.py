@@ -22,7 +22,7 @@ class DDQN(DQN):
         sol_batch_size = 4
         episode_num = 16
         optimization_num = 40
-
+        winrate_sum = prev_winrate_sum = 0.
         for i in range(self.epochs):
             self.maze.reset()
             # print("Epoch:%d" %(i))
@@ -70,12 +70,19 @@ class DDQN(DQN):
                 sys.stdout.write("Epochs:%d" % (i))
 
             # Decay learning_rate
-            if i % self.rounds_to_decay_lr == 0 and i != 0:
-                self.decay_learning_rate()
-                print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+            if i%1000 == 0:
+                if winrate_sum <= prev_winrate_sum:
+                    self.decay_learning_rate(decay=0.5)
+                    print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
+                prev_winrate_sum = winrate_sum
+                winrate_sum = 0.
+
+            # if i % self.rounds_to_decay_lr == 0 and i != 0:
+            #     self.decay_learning_rate()
+            #     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
 
             if i % 160 == 0:
-                self.test(self.rounds_to_test)
+                winrate_sum += self.test(self.rounds_to_test)
 
             if self.rounds_to_save_model != 0 and i % self.rounds_to_save_model == 0:
                 gl.get_model().save(self.saved_model_path)
