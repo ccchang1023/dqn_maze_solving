@@ -8,7 +8,7 @@ train_params={
     'batch_size' : 128,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-3,
+    'learning_rate' : 5e-5,
     'epochs' : 1000000,
     'num_moves_limit' : 100,
     'rounds_to_test' : 100,
@@ -33,7 +33,7 @@ search_params={
 def main():
 
     # dqn = DQN(**train_params)
-    # initial_rounds = 50
+    # initial_rounds = 200
     # print ("Initial dataset:", initial_rounds, " rounds")
     # dqn.initial_dataset(initial_rounds)
     # print("Start training")

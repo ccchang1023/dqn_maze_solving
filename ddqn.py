@@ -19,7 +19,7 @@ class DDQN(DQN):
         gl.update_targetModel()
 
     def train(self):
-        sol_batch_size = 4
+        sol_batch_size = 8
         episode_num = 16
         optimization_num = 40
         winrate_sum = prev_winrate_sum = 0.
@@ -46,10 +46,10 @@ class DDQN(DQN):
                     for k in np.random.choice(len(pos_list), sol_batch_size, replace=False):
                         if k != 0:
                             self.maze.set_token_pos(pos_list[k-1])
-                        s = self.maze.get_state()
-                        dir = dir_list[k]
-                        s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                        sol_transition = [s, dir, r, s_next, is_terminate]
+                        sol_s = self.maze.get_state()
+                        sol_dir = dir_list[k]
+                        sol_s_next, sol_r, sol_is_goal, sol_is_terminate = self.maze.move(DIR(dir))
+                        sol_transition = [sol_s, sol_dir, sol_r, sol_s_next, sol_is_terminate]
                         self.experience_db.add_data(sol_transition)
                     self.maze.set_move_count(origin_move_count)
                     self.maze.set_token_pos(origin_token_pos)
@@ -58,7 +58,9 @@ class DDQN(DQN):
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
-            if i%episode_num == 0:
+                # self.maze.create_img()
+
+            if i % episode_num == 0:
                 for _ in range(optimization_num):
                     inputs, answers = self.experience_db.get_data_by_ddqn(self.batch_size, self.gamma)
                     # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
@@ -70,7 +72,7 @@ class DDQN(DQN):
                 sys.stdout.write("Epochs:%d" % (i))
 
             # Decay learning_rate
-            if i%1000 == 0:
+            if i%800 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))

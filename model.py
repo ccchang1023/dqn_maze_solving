@@ -31,14 +31,14 @@ def default_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
 def deep_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
     model = Sequential()
-    model.add(Dense(64, input_shape=(state_size,)))
+    model.add(Dense(256, input_shape=(state_size,)))
     model.add(PReLU())
-    # model.add(Dropout(0.2))
+    model.add(Dropout(0.2))
 
-    for _ in range(3):
-        model.add(Dense(64))
+    for _ in range(2):
+        model.add(Dense(256))
         model.add(PReLU())
-        # model.add(Dropout(0.2))
+        model.add(Dropout(0.2))
 
     model.add(Dense(num_of_actions))
     opt = Adam(learning_rate, epsilon=1e-8)
@@ -70,7 +70,6 @@ def dueldqn_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
 def dueldqn_formula(x):
     return x[0]+(x[1] - K.mean(x[1]))
-
 
 def conv2d_model(learning_rate=5e-5, state_shape=None, num_of_actions=4):
     batch, rows, cols, channels = state_shape

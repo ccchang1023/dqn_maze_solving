@@ -64,73 +64,68 @@ class DQN(object):
         K.set_value(gl.get_model().optimizer.lr, lr*decay)
     
     def train(self):
-        tbCallBack = None
-        if self.tensorboard_log_path != "":
-            if not os.path.isfile(self.tensorboard_log_path):
-                str = "mkdir " + self.tensorboard_log_path 
-                os.system(str)
-            tbCallBack = TensorBoard(log_dir=self.tensorboard_log_path, histogram_freq=0,
-                                                 write_graph=False, write_images=True)
-        prev_winrate_sum = winrate_sum = 0.
-
+        sol_batch_size = 4
+        episode_num = 16
+        optimization_num = 40
+        winrate_sum = prev_winrate_sum = 0.
         for i in range(self.epochs):
             self.maze.reset()
             # print("Epoch:%d" %(i))
-            dir = pre_dir = None
-
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
                 if random.random() <= self.epsilon:
                     dir = np.random.randint(0, 3)
                 else:
-                    # dir = self.get_best_action(s)
-                    Q_list = gl.get_model().predict(s)
-                    dir = np.argmax(Q_list)
-                    #Avoid the loop
-                    # if dir == self.maze.get_opposite_dir(pre_dir):
-                    #     Q_list = np.delete(Q_list, dir)
-                    #     dir = np.argmax(Q_list)
-
-                pre_dir = dir
+                    dir = self.get_best_action(s)
 
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                transition = [s,dir,r,s_next,is_terminate]
+                transition = [s, dir, r, s_next, is_terminate]
                 self.experience_db.add_data(transition)
-                # self.maze.create_img()
-                inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                # history = model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
-                train_loss = gl.get_model().train_on_batch(inputs, answers)
+
+                #Store the solution data
+                pos_list, dir_list = self.maze.get_opt_path()
+                if len(pos_list) >= sol_batch_size:
+                    origin_move_count = self.maze.get_move_count()
+                    origin_token_pos = self. maze.get_token_pos()
+                    origin_reward_sum = self.maze.get_reward_sum()
+                    for k in np.random.choice(len(pos_list), sol_batch_size, replace=False):
+                        if k != 0:
+                            self.maze.set_token_pos(pos_list[k-1])
+                        s = self.maze.get_state()
+                        dir = dir_list[k]
+                        s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                        sol_transition = [s, dir, r, s_next, is_terminate]
+                        self.experience_db.add_data(sol_transition)
+                    self.maze.set_move_count(origin_move_count)
+                    self.maze.set_token_pos(origin_token_pos)
+                    self.maze.set_reward_sum(origin_reward_sum)
 
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    # if is_goal:
-                    #     self.experience_db.add_game_order_data(transition_list)  #Only collect the data that reach the goal
-                    # if i%100==0 and i!=0:
-                    #     self.maze.show_animate()
                     break
 
-            # if i%100 == 0:
-            #     print("Epoch:%d, move_count:%d, reward_sum:%f, loss:%f" %(i, self.maze.get_move_count(),
-            #           self.maze.get_reward_sum(), loss))
-            if i % 100 == 0:
-                sys.stdout.write("Epochs:%d" %(i))
-                winrate_sum += self.test(self.rounds_to_test)
+            if i%episode_num == 0:
+                for _ in range(optimization_num):
+                    inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
+                    # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
+                    train_loss = gl.get_model().train_on_batch(inputs, answers)
 
-            #Reset Solution data
-            if i % 100 == 0:
-                self.initial_sol_dataset(50)
+            if i % 160 == 0:
+                sys.stdout.write("Epochs:%d" % (i))
 
             # Decay learning_rate
-            if i%1000 == 0:
-                if winrate_sum < prev_winrate_sum:
+            if i%1600 == 0 and i != 0:
+                if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
                 prev_winrate_sum = winrate_sum
                 winrate_sum = 0.
 
-            # if i % self.rounds_to_decay_lr == 0 and i!=0 :
+            # if i % self.rounds_to_decay_lr == 0 and i != 0:
             #     self.decay_learning_rate()
             #     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
-            #     winrate_sum = 0.
+
+            if i % 160 == 0:
+                winrate_sum += self.test(self.rounds_to_test)
 
             if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
                 gl.get_model().save(self.saved_model_path)
