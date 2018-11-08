@@ -43,18 +43,28 @@ class DDQN(DQN):
                     origin_move_count = self.maze.get_move_count()
                     origin_token_pos = self. maze.get_token_pos()
                     origin_reward_sum = self.maze.get_reward_sum()
+
+                    # print("goal:", self.maze.goal)
+                    # print("pos_list: ", pos_list)
+                    # print("dir_list", dir_list)
+
                     for k in np.random.choice(len(pos_list), sol_batch_size, replace=False):
                         if k != 0:
                             self.maze.set_token_pos(pos_list[k-1])
+                        # print("token_pos:", self.maze.token_pos)
                         sol_s = self.maze.get_state()
                         sol_dir = dir_list[k]
-                        sol_s_next, sol_r, sol_is_goal, sol_is_terminate = self.maze.move(DIR(dir))
+                        sol_s_next, sol_r, sol_is_goal, sol_is_terminate = self.maze.move(DIR(sol_dir))
                         sol_transition = [sol_s, sol_dir, sol_r, sol_s_next, sol_is_terminate]
+                        # print("sol transition:", sol_transition)
+
                         self.experience_db.add_data(sol_transition)
+
                     self.maze.set_move_count(origin_move_count)
                     self.maze.set_token_pos(origin_token_pos)
                     self.maze.set_reward_sum(origin_reward_sum)
 
+                # input("Wait...")
                 if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                     break
 
