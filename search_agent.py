@@ -38,7 +38,6 @@ class SEARCH_AGENT(object):
         self.maze = DEFAULT_MAZE
         # self.maze = TEST_MAZE
 
-
         print(self.maze)
         nrows, ncols = np.shape(self.maze)
         self.pos = [0,0]

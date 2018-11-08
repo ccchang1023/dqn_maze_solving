@@ -19,7 +19,7 @@ class DDQN(DQN):
         gl.update_targetModel()
 
     def train(self):
-        sol_batch_size = 8
+        sol_batch_size = 4
         episode_num = 16
         optimization_num = 40
         winrate_sum = prev_winrate_sum = 0.
@@ -72,7 +72,7 @@ class DDQN(DQN):
                 sys.stdout.write("Epochs:%d" % (i))
 
             # Decay learning_rate
-            if i%800 == 0 and i != 0:
+            if i%6400 == 0 and i>3200 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))

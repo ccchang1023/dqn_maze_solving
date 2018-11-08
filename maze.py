@@ -270,7 +270,6 @@ class Maze(object):
 
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
-        
         #Initialize in down stair ways
         # for x in range(size):
             # for y in range(size):
@@ -454,6 +453,7 @@ def generate_robot_map(size=40):
 def generate_block_map(size=40):
     m = np.ones([size,size], dtype=int)
     set_block(m,(5,5), 30, 30,)
+    # set_block(m,(3,3), 5, 5,)
     return m
 
 

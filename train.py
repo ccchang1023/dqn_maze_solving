@@ -3,12 +3,14 @@ from search_agent import SEARCH_AGENT
 from dqn import DQN
 from ddqn import DDQN
 from dueldqn import DUELDQN
+from rrt_agent import RRT
+import time
 
 train_params={
     'batch_size' : 128,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 5e-5,
+    'learning_rate' : 5e-4,
     'epochs' : 1000000,
     'num_moves_limit' : 100,
     'rounds_to_test' : 100,
@@ -39,12 +41,12 @@ def main():
     # print("Start training")
     # dqn.train()
 
-    ddqn = DDQN(**train_params)
-    initial_rounds = 200
-    print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_dataset(initial_rounds)
-    print("Start training")
-    ddqn.train()
+    # ddqn = DDQN(**train_params)
+    # initial_rounds = 200
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # ddqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # ddqn.train()
 
     # sa = SEARCH_AGENT(**search_params)
     # sa.search()
@@ -55,6 +57,16 @@ def main():
     # dqn.initial_dataset(initial_rounds)
     # print("Start training")
     # dqn.train()
+
+    rrt = RRT()
+    s = time.clock()
+    rounds = 100
+    for _ in range(rounds):
+        print(rrt.gen_path())
+        rrt.reset()
+    t = time.clock()
+    print((t-s)/rounds)
+
 
     
 if __name__ == "__main__":
