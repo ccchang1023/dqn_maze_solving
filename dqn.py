@@ -55,6 +55,17 @@ class DQN(object):
             transition = [s,d,r,s_next,is_terminate]
             self.experience_db.add_data(transition)
 
+    def initial_opt_dataset(self, n_rounds):
+        for _ in range(n_rounds):
+            self.maze.reset()
+            pos_list, dir_list = self.maze.get_opt_path2()
+            for dir in dir_list:
+                s = self.maze.get_state()
+                s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                transition = [s,dir,r,s_next,is_terminate]
+                self.experience_db.add_data(transition)
+
+
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
         return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue

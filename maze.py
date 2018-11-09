@@ -88,19 +88,20 @@ class Maze(object):
         self.terminate_tag = False
         if start_pos == None:
             # self.token_pos = random.choice(self.road_list).copy()
-            # Supervised learning version
             x = np.random.randint(0, 40)
             y = np.random.randint(0, 5)
+            # x = np.random.randint(0,10)
+            # y = np.random.randint(0,3)
             self.token_pos = [x, y]
         else:
             self.token_pos = start_pos.copy()
 
         if goal==None:
-            # while self.goal != self.token_pos:
-            #     self.goal = random.choice(self.road_list).copy()
-            # Supervised learning version
+            # self.goal = random.choice(self.road_list).copy()
             x = np.random.randint(0, 40)
-            y = np.random.randint(35, 40)
+            y = np.random.randint(36, 40)
+            # x = np.random.randint(0,10)
+            # y = np.random.randint(8,10)
             self.goal = [x, y]
         else:
             self.goal = goal.copy()
@@ -111,12 +112,12 @@ class Maze(object):
         self.move_count = 0
         # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
-        self.visited_list = np.zeros(np.shape(self.maze))
-        self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
+        # self.visited_list = np.zeros(np.shape(self.maze))
+        # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
         # self.visited_set = set()
 
-        self.img_list = []
-        plt.cla()
+        # self.img_list = []
+        # plt.cla()
     
     def move(self, dir):
         goal_tag = False
@@ -214,18 +215,9 @@ class Maze(object):
     def get_num_of_actions(self):
         return self.num_of_actions
 
-    def get_token_pos(self):
-        return self.token_pos
-        
-    def get_move_count(self):
-        return self.move_count
-     
     def get_optimal_move_count(self):
         return self.optimal_move_count
-     
-    def get_reward_sum(self):
-        return self.reward_sum
-    
+
     def get_reward_lower_bound(self):
         return self.reward_lower_bound
     
@@ -263,10 +255,14 @@ class Maze(object):
         return self.move_count
 
     def get_token_pos(self):
-        return self.token_pos
+        return self.token_pos.copy()
+
+    def get_goal_pos(self):
+        return self.goal.copy()
 
     def get_reward_sum(self):
         return self.reward_sum
+
 
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
@@ -355,9 +351,17 @@ class Maze(object):
         x,y = self.token_pos
         gx,gy = self.goal
 
+        #40x40
+        ub=4
+        lb=36
+
+        #10x10
+        # ub = 3
+        # lb = 8
+
         #Move UP in first step is better:
-        if (abs(4-x)+abs(4-gx)) < (abs(36-x)+abs(36-gx)):
-            while x > 4:
+        if (abs(ub-x)+abs(ub-gx)) < (abs(lb-x)+abs(lb-gx)):
+            while x > ub:
                 x -= 1
                 pos_list.append([x,y])
                 dir_list.append(1)
@@ -370,7 +374,7 @@ class Maze(object):
                 pos_list.append([x,y])
                 dir_list.append(3)
         else:
-            while x < 36:
+            while x < lb:
                 x += 1
                 pos_list.append([x,y])
                 dir_list.append(3)
@@ -385,12 +389,59 @@ class Maze(object):
 
         return pos_list, dir_list
 
+    def get_opt_path2(self):
+        pos_list = []
+        dir_list = []
+        x,y = self.token_pos
+        gx,gy = self.goal
+        left_top_pos = [5,5] #Block left top pos
+        right_down_pos = [35,35]
+
+        if y < left_top_pos[0]:
+            if np.random.rand()<=0.5:
+                while x >= left_top_pos[0]:
+                    x -= 1
+                    dir_list.append(1)
+                    pos_list.append([x, y])
+            else:
+                while x <= right_down_pos[0]:
+                    x += 1
+                    dir_list.append(3)
+                    pos_list.append([x, y])
+
+        if y < gy:
+            while y < gy:
+                y += 1
+                dir_list.append(2)
+                pos_list.append([x, y])
+        else:
+            while y > gy:
+                y -= 1
+                dir_list.append(0)
+                pos_list.append([x,y])
+
+        if x < gx:
+            while x < gx:
+                x += 1
+                dir_list.append(3)
+                pos_list.append([x, y])
+        else:
+            while x >gx:
+                x -= 1
+                dir_list.append(1)
+                pos_list.append([x, y])
+
+        return pos_list, dir_list
+
 
     def set_move_count(self, n):
         self.move_count = n
 
     def set_token_pos(self, pos):
-        self.token_pos = pos
+        self.token_pos = pos.copy()
+
+    def set_goal(self, pos):
+        self.goal = pos.copy()
 
     def set_reward_sum(self, r):
         self.reward_sum = r
@@ -454,6 +505,7 @@ def generate_robot_map(size=40):
 def generate_block_map(size=40):
     m = np.ones([size,size], dtype=int)
     set_block(m,(5,5), 30, 30,)
+    # set_block(m,(3,3),4,4)
     return m
 
 

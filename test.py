@@ -33,8 +33,18 @@ train_params={
 
 
 def main():
-
-    ddqn = DDQN(**train_params)
+    m = Maze()
+    for _ in range(10000000):
+        m.reset()
+        return
+        p = random.choice(m.road_list)
+        m.set_token_pos(p)
+        p,d = m.get_opt_path2()
+        for i in d:
+            s, r, gTag, tTag = m.move(DIR(i))
+        if r != 1:
+            print("Start s:", m.get_token_pos(), " g: ", m.get_goal_pos())
+            input("Bug...")
 
     return
 
