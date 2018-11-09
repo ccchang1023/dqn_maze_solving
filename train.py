@@ -8,7 +8,7 @@ train_params={
     'batch_size' : 128,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-5,
+    'learning_rate' : 5e-5,
     'epochs' : 1000000,
     'num_moves_limit' : 100,
     'rounds_to_test' : 100,
@@ -40,7 +40,7 @@ def main():
     # dqn.train()
 
     ddqn = DDQN(**train_params)
-    initial_rounds = 10
+    initial_rounds = 1000
     print ("Initial dataset:", initial_rounds, " rounds")
     ddqn.initial_opt_dataset(initial_rounds)
     print("Start training")

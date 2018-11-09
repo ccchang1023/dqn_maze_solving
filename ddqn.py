@@ -75,19 +75,27 @@ class DDQN(DQN):
                     # print("sol transition:", transition)
                     self.experience_db.add_data(transition)
 
-            #Add solution data
+            # Add solution data
             self.maze.reset()
             self.maze.set_token_pos(origin_token_pos)
             self.maze.set_goal(origin_goal)
             pos_list, dir_list = self.maze.get_opt_path2()
-            for dir in dir_list:
+            num = min(len(pos_list), hindsight_batch_size)
+            for k in np.random.choice(len(pos_list), num, replace=False):
+                self.maze.reset()
+                if k == 0:
+                    self.maze.set_token_pos(origin_token_pos)
+                else:
+                    self.maze.set_token_pos(pos_list[k - 1])
+                self.maze.set_goal(origin_goal)
+                dir = dir_list[k]
                 s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                 transition = [s, dir, r, s_next, is_terminate]
                 self.experience_db.add_data(transition)
-            if r != 1:
-                print("Bug:Can't find path",r)
-                print("token_pos:", origin_token_pos)
-                print("goal:", origin_goal)
+                # if r != 1:
+                #     print("Bug:Can't find path",r)
+                #     print("token_pos:", origin_token_pos)
+                #     print("goal:", origin_goal)
 
             if i % episode_num == 0:
                 for _ in range(optimization_num):
@@ -101,7 +109,7 @@ class DDQN(DQN):
                 sys.stdout.write("Epochs:%d" % (i))
 
             # Decay learning_rate
-            if i%1600 == 0 and i != 0:
+            if i%3200 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
