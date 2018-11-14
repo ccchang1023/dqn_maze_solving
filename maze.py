@@ -182,17 +182,18 @@ class Maze(object):
 
         # state2: token_pos + goal_pos + 4dir extension distance()
         s = np.append(self.token_pos, self.goal)
-        x,y = self.token_pos
-        t = np.zeros(4,dtype=np.int)
-        while x+t[0]+1 < self.nrows and self.maze[x+t[0]+1][y] != 0:
-            t[0] += 1
-        while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
-            t[1] += 1
-        while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
-            t[2] += 1
-        while y-t[3]-1 >=0 and self.maze[x][y-t[3]-1] != 0:
-            t[3] += 1
+        return s.reshape(1,-1)
 
+        # x,y = self.token_pos
+        # t = np.zeros(4,dtype=np.int)
+        # while x+t[0]+1 < self.nrows and self.maze[x+t[0]+1][y] != 0:
+        #     t[0] += 1
+        # while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
+        #     t[1] += 1
+        # while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
+        #     t[2] += 1
+        # while y-t[3]-1 >=0 and self.maze[x][y-t[3]-1] != 0:
+        #     t[3] += 1
         # diff = abs(np.subtract(self.goal, self.token_pos))
         return (np.append(s, t)).reshape(1,-1)
 

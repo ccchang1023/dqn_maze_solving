@@ -5,7 +5,7 @@ from ddqn import DDQN
 from dueldqn import DUELDQN
 
 train_params={
-    'batch_size' : 128,
+    'batch_size' : 64,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
     'learning_rate' : 1e-5,
@@ -19,7 +19,7 @@ train_params={
     'rounds_to_decay_lr' : 20000,
     'step_to_update_tModel' : 500,
     'maze_reward_lower_bound' : -0.03*1600,
-    'db_capacity': 100000,
+    'db_capacity': 10000,
     #'tensorboard_log_path' : './log/test/',
     'Model_type': "dense",
 }
@@ -40,7 +40,7 @@ def main():
     # dqn.train()
 
     ddqn = DDQN(**train_params)
-    initial_rounds = 10
+    initial_rounds = 100
     print ("Initial dataset:", initial_rounds, " rounds")
     ddqn.initial_opt_dataset(initial_rounds)
     print("Start training")

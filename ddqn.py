@@ -19,9 +19,9 @@ class DDQN(DQN):
         gl.update_targetModel()
 
     def train(self):
-        hindsight_batch_size = 4
+        hindsight_batch_size = 8
         cycles = 16
-        optimization_num = 20
+        optimization_num = 40
         winrate_sum = prev_winrate_sum = 0.
         for i in range(self.epochs):
             # print("Epoch:%d Cycle:%d" %(i,j))
@@ -43,19 +43,15 @@ class DDQN(DQN):
                         dir = np.random.randint(0, 3)
                     else:
                         dir = self.get_best_action(s)
-                    self.maze.create_img()
+                    # self.maze.create_img()
                     s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
                     transition = [s, dir, r, s_next, is_terminate]
 
-                    # print("prevpos:", prev_pos)
-                    if prev_pos == [s_next[0][0],s_next[0][1]]:
-                        # self.maze.show_animate()
-                        break
-                    else:
-                        prev_pos = [s[0][0],s[0][1]]
+                    if prev_pos != [s_next[0][0],s_next[0][1]]:
+                        prev_pos = [s[0][0], s[0][1]]
+                        self.experience_db.add_data(transition)
+                        transition_list.append(transition)
 
-                    self.experience_db.add_data(transition)
-                    transition_list.append(transition)
                     if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
                         break
 
@@ -72,27 +68,27 @@ class DDQN(DQN):
 
                 # Hindsight experience replay
                 # print("HER...")
-                # for k in range(len(transition_list)-1):
-                #     pos = [transition_list[k][0][0][0],transition_list[k][0][0][1]]  #get token_pos
-                #     num = min(len(transition_list)-k-1,hindsight_batch_size)
-                #     # print("----next trans----")
-                #     for m in np.random.choice(len(transition_list)-k-1, num, replace=False):
-                #         self.maze.reset()
-                #         self.maze.set_token_pos(pos)
-                #         # print("virtual token_pos:", self.maze.token_pos)
-                #
-                #         virtual_goal = [transition_list[k+m+1][0][0][0],transition_list[k+m+1][0][0][1]]   #get goal
-                #         self.maze.set_goal(virtual_goal)
-                #         # print("virtual goal_pos:", self.maze.goal)
-                #         s = self.maze.get_state()
-                #
-                #         dir = transition_list[k][1]   #get dir
-                #         # print("dir:",dir)
-                #
-                #         s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                #         transition = [s, dir, r, s_next, is_terminate]
-                #         # print("sol transition:", transition)
-                #         self.experience_db.add_data(transition)
+                for k in range(len(transition_list)-1):
+                    pos = [transition_list[k][0][0][0],transition_list[k][0][0][1]]  #get token_pos
+                    num = min(len(transition_list)-k-1,hindsight_batch_size)
+                    # print("----next trans----")
+                    for m in np.random.choice(len(transition_list)-k-1, num, replace=False):
+                        self.maze.reset()
+                        self.maze.set_token_pos(pos)
+                        # print("virtual token_pos:", self.maze.token_pos)
+
+                        virtual_goal = [transition_list[k+m+1][0][0][0],transition_list[k+m+1][0][0][1]]   #get goal
+                        self.maze.set_goal(virtual_goal)
+                        # print("virtual goal_pos:", self.maze.goal)
+                        s = self.maze.get_state()
+
+                        dir = transition_list[k][1]   #get dir
+                        # print("dir:",dir)
+
+                        s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                        transition = [s, dir, r, s_next, is_terminate]
+                        # print("sol transition:", transition)
+                        self.experience_db.add_data(transition)
 
                 # Add solution data
                 # print("Add solution data...")
@@ -102,7 +98,6 @@ class DDQN(DQN):
                 pos_list, dir_list = self.maze.get_opt_path2()
                 # print(pos_list)
                 # print(dir_list)
-
                 #complete path
                 for k in range(len(pos_list)):
                     s = self.maze.get_state()
