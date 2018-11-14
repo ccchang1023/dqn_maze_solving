@@ -58,33 +58,32 @@ class Maze(object):
         #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
         # self.maze = DEFAULT_MAZE
+        # self.maze = generate_robot_map(size=40)
         self.maze = generate_block_map(size=40)
-        np.savetxt('40x40Maze_20181102', self.maze, fmt='%1.0f')
+        # np.savetxt('40x40Maze_20181102', self.maze, fmt='%1.0f')
 
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
-        nrows, ncols = np.shape(self.maze)
+        self.nrows, self.ncols = np.shape(self.maze)
 
-        self.goal = [0 , ncols - 1] #For 40x40 robot maze
+        self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
         # self.goal = [nrows-1, ncols-1] #For 10x10 maze
 
-        self.road_list =  [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
+        self.road_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
         # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()
         #To create img and animation
         self.fig = plt.figure()
         plt.grid(True)
-        nrows, ncols = np.shape(self.maze)
         ax = plt.gca()
-        ax.set_xticks(np.arange(0.5, nrows, 1))
-        ax.set_yticks(np.arange(0.5, ncols, 1))
+        ax.set_xticks(np.arange(0.5, self.nrows, 1))
+        ax.set_yticks(np.arange(0.5, self.ncols, 1))
         ax.set_xticklabels([])
         ax.set_yticklabels([])
 
 
     def reset(self, start_pos=None, goal=None):
-        nrows, ncols = np.shape(self.maze)
         self.terminate_tag = False
         if start_pos == None:
             # self.token_pos = random.choice(self.road_list).copy()
@@ -116,8 +115,8 @@ class Maze(object):
         # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
         # self.visited_set = set()
 
-        # self.img_list = []
-        # plt.cla()
+        self.img_list = []
+        plt.cla()
     
     def move(self, dir):
         goal_tag = False
@@ -155,11 +154,11 @@ class Maze(object):
             goal_tag = terminate_tag = True
 
         # elif self.is_visited(self.token_pos[0],self.token_pos[1]):
-            # print("is_visited!")
-            # reward = -0.125
+        #     print("is_visited!")
+        #     reward = -0.125
 
         # else:
-            # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+        #     self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             # self.visited_set.add(tuple(self.token_pos))
             # reward = -0.01
 
@@ -181,10 +180,21 @@ class Maze(object):
         # state[r][c] = 2
         # return state.reshape(1,-1) #In order to match with Keras input, check model input_shape
 
-        # state2: token_pos + goal_pos + diff_pos
+        # state2: token_pos + goal_pos + 4dir extension distance()
         s = np.append(self.token_pos, self.goal)
-        diff = abs(np.subtract(self.goal, self.token_pos))
-        return (np.append(s, diff)).reshape(1,-1)
+        x,y = self.token_pos
+        t = np.zeros(4,dtype=np.int)
+        while x+t[0]+1 < self.nrows and self.maze[x+t[0]+1][y] != 0:
+            t[0] += 1
+        while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
+            t[1] += 1
+        while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
+            t[2] += 1
+        while y-t[3]-1 >=0 and self.maze[x][y-t[3]-1] != 0:
+            t[3] += 1
+
+        # diff = abs(np.subtract(self.goal, self.token_pos))
+        return (np.append(s, t)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
         # state = np.append(self.token_pos, self.goal)
@@ -398,7 +408,8 @@ class Maze(object):
         right_down_pos = [35,35]
 
         if y < left_top_pos[0]:
-            if np.random.rand()<=0.5:
+            # if np.random.rand()<=0.5:
+            if abs(x-left_top_pos[0]) < abs(x-right_down_pos[0]):
                 while x >= left_top_pos[0]:
                     x -= 1
                     dir_list.append(1)
@@ -450,9 +461,9 @@ class Maze(object):
     def create_img(self):
         nrows, ncols = np.shape(self.maze)
         canvas = np.copy(self.maze).astype(float)
-        visited_point = [[x,y] for x in range(nrows) for y in range(ncols) if self.visited_list[x][y]==1]
-        for x,y in visited_point:
-            canvas[x,y] = 0.6
+        # visited_point = [[x,y] for x in range(nrows) for y in range(ncols) if self.visited_list[x][y]==1]
+        # for x,y in visited_point:
+        #     canvas[x,y] = 0.6
 
         rat_row, rat_col  = self.token_pos
         canvas[rat_row, rat_col] = 0.3   # token cell

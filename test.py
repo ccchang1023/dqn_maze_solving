@@ -34,6 +34,10 @@ train_params={
 
 def main():
     m = Maze()
+    print(m.get_state())
+    return
+
+
     for _ in range(10000000):
         m.reset()
         return
