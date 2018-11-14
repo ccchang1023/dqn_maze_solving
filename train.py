@@ -26,7 +26,7 @@ train_params={
 
 search_params={
     'algorithm' : "Astar",
-    'depth' : 40,
+    'depth' : 45,
     "maze_type" : "10x10",
 }
 
@@ -49,7 +49,7 @@ def main():
     # ddqn.train()
 
     sa = SEARCH_AGENT(**search_params)
-    round = 10000
+    round = 100
     start = time.clock()
     for _ in range(round):
         sa.reset()
