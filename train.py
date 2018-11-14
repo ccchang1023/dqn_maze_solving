@@ -2,6 +2,7 @@ from __future__ import print_function
 # from dqn import DQN
 # from ddqn import DDQN
 from search_agent import SEARCH_AGENT
+import time
 
 train_params={
     'batch_size' : 8,
@@ -48,8 +49,14 @@ def main():
     # ddqn.train()
 
     sa = SEARCH_AGENT(**search_params)
-    sa.search()
+    round = 10000
+    start = time.clock()
+    for _ in range(round):
+        sa.reset()
+        sa.search()
+    end = time.clock()
 
+    print("Average time:", (end-start)/round)
 
 
 

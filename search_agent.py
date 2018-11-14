@@ -34,28 +34,31 @@ class SEARCH_AGENT(object):
         self.path = deque()
         self.answer_path = deque()
 
-        # self.maze = generate_robot_map()
-        self.maze = DEFAULT_MAZE
+        self.maze = generate_robot_map()
+        # self.maze = DEFAULT_MAZE
         # self.maze = TEST_MAZE
 
-
         print(self.maze)
+        self.reset()
+
+        # self.fig = plt.figure()
+        # plt.grid(True)
+        # nrows, ncols = np.shape(self.maze)
+        # ax = plt.gca()
+        # ax.set_xticks(np.arange(0.5, nrows, 1))
+        # ax.set_yticks(np.arange(0.5, ncols, 1))
+        # ax.set_xticklabels([])
+        # ax.set_yticklabels([])
+
+    def reset(self):
         nrows, ncols = np.shape(self.maze)
-        self.pos = [0,0]
-        self.goal = [0,ncols-1]
+        self.road_list = [[x, y] for x in range(nrows) for y in range(ncols) if self.maze[x, y] == 1]
+        self.pos = random.choice(self.road_list)
+        self.goal = random.choice(self.road_list)
         self.visited_table = np.zeros([nrows, ncols], dtype=int)
-        x,y = self.pos
-        self.visited_table[x,y] = 1
-
-
-        self.fig = plt.figure()
-        plt.grid(True)
-        nrows, ncols = np.shape(self.maze)
-        ax = plt.gca()
-        ax.set_xticks(np.arange(0.5, nrows, 1))
-        ax.set_yticks(np.arange(0.5, ncols, 1))
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
+        x, y = self.pos
+        self.visited_table[x, y] = 1
+        # print("From ", self.pos, " to ", self.goal)
 
 
     def search(self):
@@ -84,6 +87,7 @@ class SEARCH_AGENT(object):
         next_state = [[x,y-1],[x-1,y],[x,y+1],[x+1,y]]
         for (xn, yn) in next_state:
             if self.is_valid(xn,yn) and not self.is_block(xn,yn) and vt[xn,yn]==0:
+                self.visited_table[xn, yn] = 1
                 n = NODE([xn,yn], move_count+1)
                 successor.append(n)
 
@@ -140,20 +144,20 @@ class SEARCH_AGENT(object):
 
             if node.move_count > farest_dist:
                 farest_dist = node.move_count
-                print("Farest dist:", farest_dist)
+                # print("Farest dist:", farest_dist)
 
             if node.pos == self.goal:
-                print("Find goal!")
+                # print("Find goal!")
                 ans = []
                 while node.parent!=None:
                     ans.append(node.pos)
                     node = node.parent
                 ans.reverse()
-                print(ans)
+                # print(ans)
                 return True
 
             x,y = node.pos
-            self.visited_table[x,y] = 1
+            # self.visited_table[x,y] = 1
             successor = self.get_successor(node, self.visited_table, node.move_count)
             for n in successor:
                 n.parent = node
