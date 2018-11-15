@@ -17,6 +17,23 @@ class DDQN(DQN):
         # DQN.__init__(self, train_params)
         gl.init_targetModel()
         self.step_to_update_tModel = train_params.get("step_to_update_tModel", 100)
+        self.sa = SEARCH_AGENT()
+        self.sa.set_maze(maze=self.maze.maze)
+
+    def initial_opt_dataset_by_SA(self, n_rounds):
+        for _ in range(n_rounds):
+            self.maze.reset()
+            pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
+            self.sa.reset()
+            for dir in dir_list:
+                s = self.maze.get_state()
+                s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                transition = [s,dir,r,s_next,is_terminate]
+                self.experience_db.add_data(transition)
+            if r != 1:
+                print("Bug:Can't find path", r)
+                input("Wait..")
+
 
     def update_target_model(self):
         gl.update_targetModel()
@@ -26,9 +43,7 @@ class DDQN(DQN):
         cycles = 16
         optimization_num = 40
         winrate_sum = prev_winrate_sum = 0.
-        sa = SEARCH_AGENT()
-        sa.set_maze(maze=self.maze.maze)
-        print(sa.maze)
+
 
         for i in range(self.epochs):
             # print("Epoch:%d Cycle:%d" %(i,j))
@@ -41,7 +56,7 @@ class DDQN(DQN):
                 transition_list = []
                 origin_token_pos = self.maze.get_token_pos()
                 origin_goal = self.maze.get_goal_pos()
-                #Normal DQN
+                #====================Normal DQN====================
                 # print("Normal DQN...")
                 prev_pos = None
                 for k in range(self.num_moves_limit):
@@ -74,7 +89,7 @@ class DDQN(DQN):
                 # print(a)
                 # print(np.shape(a))
 
-                # Add solution data
+                # ====================Add solution data====================
                 # print("Add solution data...")
                 self.maze.reset()
                 self.maze.set_token_pos(origin_token_pos)
@@ -82,8 +97,8 @@ class DDQN(DQN):
                 # print("token_pos2:", self.maze.token_pos)
                 # print("goal2:", self.maze.goal)
                 # pos_list, dir_list = self.maze.get_opt_path2()
-                pos_list, dir_list = sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
-                sa.reset()
+                pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
+                self.sa.reset()
                 # print(pos_list)
                 # print(dir_list)
                 #complete path
@@ -117,7 +132,7 @@ class DDQN(DQN):
                     input("Wait..")
 
 
-                # Hindsight experience replay
+                # ====================Hindsight experience replay====================
                 self.maze.reset()
                 self.maze.set_token_pos(origin_token_pos)
                 self.maze.set_goal(origin_goal)
