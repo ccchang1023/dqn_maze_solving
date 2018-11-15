@@ -43,7 +43,7 @@ def main():
     ddqn = DDQN(**train_params)
     initial_rounds = 1000
     print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_opt_dataset(initial_rounds)
+    ddqn.initial_opt_dataset_by_SA(initial_rounds)
     print("Start training")
     ddqn.train()
 

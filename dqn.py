@@ -65,7 +65,6 @@ class DQN(object):
                 transition = [s,dir,r,s_next,is_terminate]
                 self.experience_db.add_data(transition)
 
-
     #retrun the action of max Qvalue(predict by model)
     def get_best_action(self, state):
         return np.argmax(gl.get_model().predict(state)) #Return dir of max Qvalue
