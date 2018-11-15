@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os, sys, time, datetime, json, random
 from maze import Maze, DIR
+from search_agent import SEARCH_AGENT
 from ddqn import DDQN
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,11 +31,45 @@ train_params={
     'Model_type': "dense",
 }
 
+search_params={
+    'algorithm' : "Astar",
+    'depth' : 45,
+    "maze_type" : "10x10",
+}
+
 
 
 def main():
+    sa = SEARCH_AGENT(**search_params)
+    round = 10
+
     m = Maze()
-    print(m.get_state())
+    start = time.clock()
+    for _ in range(round):
+        # m.reset()
+        # sa.set_maze(m.maze)
+        sa.reset()
+        s = random.choice(sa.road_list)
+        g = random.choice(sa.road_list)
+        # m.set_token_pos(s)
+        # m.set_goal(g)
+        pos_list, dir_list = sa.search(start_pos=s, goal=g)
+        if pos_list==None:
+            print("fail")
+        # pos_list, dir_list = sa.search(start_pos=m.token_pos, goal=m.goal)
+
+        # print("Start:",m.token_pos)
+        # print("Goal:",m.goal)
+
+        # print(pos_list)
+        # print(dir_list)
+
+        # for dir in dir_list:
+        #     s ,r , gTag, tTag = m.move(DIR(dir))
+        #     print([s ,r , gTag, tTag])
+
+    end = time.clock()
+    print("Average time:", (end-start)/round)
     return
 
 

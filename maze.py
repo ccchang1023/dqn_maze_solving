@@ -58,19 +58,18 @@ class Maze(object):
         #     # np.savetxt('40x40Maze_20181011',self.maze, fmt='%1.0f')
 
         # self.maze = DEFAULT_MAZE
-        # self.maze = generate_robot_map(size=40)
-        self.maze = generate_block_map(size=40)
+        self.maze = generate_robot_map(size=40)
+        # self.maze = generate_block_map(size=40)
         # np.savetxt('40x40Maze_20181102', self.maze, fmt='%1.0f')
 
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         self.nrows, self.ncols = np.shape(self.maze)
-
-        self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
+        # self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
         # self.goal = [nrows-1, ncols-1] #For 10x10 maze
-
-        self.road_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
+        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(20) if self.maze[x,y] == 1]
+        self.goal_list = [[x,y+20] for x in range(self.nrows) for y in range(20) if self.maze[x,y+20] == 1]
         # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()
         #To create img and animation
@@ -86,22 +85,22 @@ class Maze(object):
     def reset(self, start_pos=None, goal=None):
         self.terminate_tag = False
         if start_pos == None:
-            # self.token_pos = random.choice(self.road_list).copy()
-            x = np.random.randint(0, 40)
-            y = np.random.randint(0, 5)
+            self.token_pos = random.choice(self.start_list).copy()
+            # x = np.random.randint(0, 40)
+            # y = np.random.randint(0, 5)
             # x = np.random.randint(0,10)
             # y = np.random.randint(0,3)
-            self.token_pos = [x, y]
+            # self.token_pos = [x, y]
         else:
             self.token_pos = start_pos.copy()
 
         if goal==None:
-            # self.goal = random.choice(self.road_list).copy()
-            x = np.random.randint(0, 40)
-            y = np.random.randint(36, 40)
+            self.goal = random.choice(self.goal_list).copy()
+            # x = np.random.randint(0, 40)
+            # y = np.random.randint(36, 40)
             # x = np.random.randint(0,10)
             # y = np.random.randint(8,10)
-            self.goal = [x, y]
+            # self.goal = [x, y]
         else:
             self.goal = goal.copy()
 
@@ -114,9 +113,8 @@ class Maze(object):
         # self.visited_list = np.zeros(np.shape(self.maze))
         # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
         # self.visited_set = set()
-
         self.img_list = []
-        plt.cla()
+        # plt.cla()     #Cost lots of time
     
     def move(self, dir):
         goal_tag = False
@@ -195,7 +193,7 @@ class Maze(object):
         # while y-t[3]-1 >=0 and self.maze[x][y-t[3]-1] != 0:
         #     t[3] += 1
         # diff = abs(np.subtract(self.goal, self.token_pos))
-        return (np.append(s, t)).reshape(1,-1)
+        # return (np.append(s, t)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
         # state = np.append(self.token_pos, self.goal)
@@ -273,7 +271,6 @@ class Maze(object):
 
     def get_reward_sum(self):
         return self.reward_sum
-
 
     def generate_map(self, size=10, road_ratio=0.7):
         m = np.zeros([size,size],dtype=int)
@@ -458,7 +455,6 @@ class Maze(object):
     def set_reward_sum(self, r):
         self.reward_sum = r
 
-
     def create_img(self):
         nrows, ncols = np.shape(self.maze)
         canvas = np.copy(self.maze).astype(float)
@@ -520,34 +516,83 @@ def generate_block_map(size=40):
     # set_block(m,(3,3),4,4)
     return m
 
+def generate_map(size=10, road_ratio=0.7):
+    m = np.zeros([size, size], dtype=int)
+
+    # Initialize in down stair ways
+    # for x in range(size):
+    # for y in range(size):
+    # if x==y:
+    # m[x][y] = 1
+    # y += 1
+    # elif x==y-1:
+    # m[x][y] = 1
+    # x += 1
+
+    # Initialize in 'U' way
+    x = y = 0
+    while x < size:
+        m[x][y] = 1
+        x += 1
+    x -= 1
+    while y < size:
+        m[x][y] = 1
+        y += 1
+    y -= 1
+    while x >= 0:
+        m[x][y] = 1
+        x -= 1
+
+    road_list = [[x, y] for x in range(size) for y in range(size) if m[x][y] == 1.0]
+    neighbor_list = np.array(get_block_neighbor_by_list(m, road_list))
+    # print("neighbor_list shape:", np.shape(neighbor_list))
+    # print(neighbor_list)
+    x, y = random.choice(neighbor_list)
+    nb = np.array(get_block_neighbor_by_point(m, x, y))
+    # print("nb shape:", np.shape(nb))
+    # print(nb)
+    neighbor_list = np.append(neighbor_list, nb, axis=0)
+
+    road_num = int(size * size * road_ratio)
+    road_count = neighbor_list.shape[0]
+    while road_count < road_num:
+        randNum = random.randint(0, neighbor_list.shape[0] - 1)
+        x, y = neighbor_list[randNum]
+        neighbor_list = np.delete(neighbor_list, randNum, axis=0)
+        m[x][y] = 1
+        nb = np.array(get_block_neighbor_by_point(m, x, y))
+        if nb.shape[0] != 0:
+            neighbor_list = np.append(neighbor_list, nb, axis=0)
+            road_count += 1
+    # print("final shape:", neighbor_list.shape)
+    # print(neighbor_list)
+    return m
 
 
+def get_block_neighbor_by_list(maze, road_list):
+    size = maze[0].size
+    nb = list()
+    for x, y in road_list:
+        # print("size:", size)
+        next = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+        for [r, c] in next:
+            if r >= 0 and r < size and c >= 0 and c < size and maze[r][c] == 0 and not [r, c] in nb:
+                nb.append([r, c])
+        # print(nb)
+        # print(np.shape(nb))
+    return nb
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def get_block_neighbor_by_point(maze, x, y):
+    size = maze[0].size
+    nb = list()
+    next = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+    for [r, c] in next:
+        if r >= 0 and r < size and c >= 0 and c < size and maze[r][c] == 0 and not [r, c] in nb:
+            nb.append([r, c])
+    return nb
         
-    
+
         
         
         

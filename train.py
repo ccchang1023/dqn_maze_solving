@@ -3,30 +3,31 @@ from search_agent import SEARCH_AGENT
 from dqn import DQN
 from ddqn import DDQN
 from dueldqn import DUELDQN
+import time
 
 train_params={
-    'batch_size' : 64,
+    'batch_size' : 128,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-5,
+    'learning_rate' : 1e-4,
     'epochs' : 1000000,
-    'num_moves_limit' : 100,
+    'num_moves_limit' : 150,
     'rounds_to_test' : 100,
     # 'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
     # 'load_model_path' : "./saved_model/ddqn_10k.h5",
-    'rounds_to_save_model' : 20000,
-    'rounds_to_decay_lr' : 20000,
+    'rounds_to_save_model' : 200,
+    'rounds_to_decay_lr' : 200,
     'step_to_update_tModel' : 500,
     'maze_reward_lower_bound' : -0.03*1600,
-    'db_capacity': 10000,
+    'db_capacity': 100000,
     #'tensorboard_log_path' : './log/test/',
     'Model_type': "dense",
 }
 
 search_params={
     'algorithm' : "Astar",
-    'depth' : 40,
+    'depth' : 45,
     "maze_type" : "10x10",
 }
 
@@ -40,7 +41,7 @@ def main():
     # dqn.train()
 
     ddqn = DDQN(**train_params)
-    initial_rounds = 100
+    initial_rounds = 1000
     print ("Initial dataset:", initial_rounds, " rounds")
     ddqn.initial_opt_dataset(initial_rounds)
     print("Start training")
@@ -55,6 +56,19 @@ def main():
     # dqn.initial_dataset(initial_rounds)
     # print("Start training")
     # dqn.train()
+
+    # sa = SEARCH_AGENT(**search_params)
+    # round = 1
+    # start = time.clock()
+    # for _ in range(round):
+    #     sa.reset()
+    #     print("Start:",sa.pos)
+    #     print("Goal:",sa.goal)
+    #     pos_list, dir_list = sa.search()
+    #     print(pos_list)
+    #     print(dir_list)
+    # end = time.clock()
+    # print("Average time:", (end-start)/round)
 
     
 if __name__ == "__main__":
