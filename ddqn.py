@@ -16,9 +16,6 @@ class DDQN(DQN):
         super(DDQN, self).__init__(**train_params)
         # DQN.__init__(self, train_params)
         gl.init_targetModel()
-        self.step_to_update_tModel = train_params.get("step_to_update_tModel", 100)
-        self.sa = SEARCH_AGENT()
-        self.sa.set_maze(maze=self.maze.maze)
 
     def initial_opt_dataset_by_SA(self, n_rounds):
         for _ in range(n_rounds):
@@ -34,7 +31,6 @@ class DDQN(DQN):
                 print("Bug:Can't find path", r)
                 input("Wait..")
 
-
     def update_target_model(self):
         gl.update_targetModel()
 
@@ -48,7 +44,7 @@ class DDQN(DQN):
             # print("Epoch:%d Cycle:%d" %(i,j))
             tmp_count = 0
             for j in range(cycles):
-                print("Epoch:%d Cycle:%d" %(i,j))
+                # print("Epoch:%d Cycle:%d" %(i,j))
                 self.maze.reset()
                 # print("token_pos:", self.maze.token_pos)
                 # print("goal:", self.maze.goal)
@@ -180,7 +176,6 @@ class DDQN(DQN):
             # Update target model
             self.update_target_model()
 
-
             if i % 10 == 0:
                 sys.stdout.write("Epochs:%d" % (i))
                 winrate_sum += self.test(self.rounds_to_test)
@@ -189,7 +184,7 @@ class DDQN(DQN):
             if i%200 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
-                    if K.get_value(gl.get_model().optimizer.lr) <= 1e-15:
+                    if K.get_value(gl.get_model().optimizer.lr) <= 1e-20:
                         print("Train Finish")
                         return
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))

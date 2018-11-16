@@ -7,6 +7,7 @@ targetModel = None
 def set_model(input):
     global model
     model = input
+    init_targetModel()
 
 def init_targetModel():
     global model

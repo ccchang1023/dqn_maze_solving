@@ -68,7 +68,7 @@ class Maze(object):
         self.nrows, self.ncols = np.shape(self.maze)
         self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
         # self.goal = [nrows-1, ncols-1] #For 10x10 maze
-        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1]
+        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
         # self.goal_list = [[x,y+20] for x in range(self.nrows) for y in range(20) if self.maze[x,y+20] == 1]
         # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()

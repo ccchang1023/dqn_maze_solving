@@ -40,24 +40,23 @@ def main():
     # print("Start training")
     # dqn.train()
 
-    ddqn = DDQN(**train_params)
-    initial_rounds = 1000
-    print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_dataset(initial_rounds)
-
-    # ddqn.initial_opt_dataset_by_SA(initial_rounds)
-    print("Start training")
-    ddqn.train()
+    # ddqn = DDQN(**train_params)
+    # initial_rounds = 1000
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # ddqn.initial_dataset(initial_rounds)
+    # # ddqn.initial_opt_dataset_by_SA(initial_rounds)
+    # print("Start training")
+    # ddqn.train()
 
     # sa = SEARCH_AGENT(**search_params)
     # sa.search()
 
-    # dqn = DUELDQN(**train_params)
-    # initial_rounds = 300
-    # print ("Initial dataset:", initial_rounds, " rounds")
-    # dqn.initial_dataset(initial_rounds)
-    # print("Start training")
-    # dqn.train()
+    duelqn = DUELDQN(**train_params)
+    initial_rounds = 1000
+    print ("Initial dataset:", initial_rounds, " rounds")
+    duelqn.initial_dataset(initial_rounds)
+    print("Start training")
+    duelqn.train()
 
     # sa = SEARCH_AGENT(**search_params)
     # round = 1

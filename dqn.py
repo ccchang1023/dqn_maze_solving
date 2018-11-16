@@ -3,11 +3,13 @@ import numpy as np
 from maze import Maze, DIR
 from model import default_model, deep_model, conv2d_model, dueldqn_model
 from experience_db import ExperienceDB
+from search_agent import SEARCH_AGENT
 from keras import backend as K
 from keras.callbacks import TensorBoard
 from keras.utils import plot_model
 from keras.models import load_model
 import global_setting as gl
+
 
 
 class DQN(object):
@@ -33,7 +35,6 @@ class DQN(object):
         lb = train_params.get("maze_reward_lower_bound", None)
         self.maze = Maze(lower_bound = lb, load_maze_path = self.load_maze_path)
         self.db_capacity = train_params.get('db_capacity', 1000)
-
         if self.load_model_path != "":
             gl.set_model(load_model(self.load_model_path))
         else:
@@ -44,6 +45,8 @@ class DQN(object):
             gl.set_model(deep_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
             # gl.set_model(dueldqn_model(self.learning_rate, self.maze.get_state().size, self.maze.get_num_of_actions()))
         self.experience_db = ExperienceDB(db_cpacity = self.db_capacity, state_size=self.maze.get_state().size)
+        self.sa = SEARCH_AGENT()
+        self.sa.set_maze(maze=self.maze.maze)
 
 
     def initial_dataset(self, n_rounds):
@@ -74,58 +77,52 @@ class DQN(object):
         K.set_value(gl.get_model().optimizer.lr, lr*decay)
     
     def train(self):
-        sol_batch_size = 4
-        episode_num = 16
-        optimization_num = 40
+        cycles = 16
         winrate_sum = prev_winrate_sum = 0.
+
         for i in range(self.epochs):
-            self.maze.reset()
-            # print("Epoch:%d" %(i))
-            for j in range(self.num_moves_limit):
-                s = self.maze.get_state()
-                if random.random() <= self.epsilon:
-                    dir = np.random.randint(0, 3)
-                else:
-                    dir = self.get_best_action(s)
+            # print("Epoch:%d Cycle:%d" %(i,j))
+            tmp_count = 0
+            for j in range(cycles):
+                # print("Epoch:%d Cycle:%d" %(i,j))
+                self.maze.reset()
+                #====================Normal DQN====================
+                # print("Normal DQN...")
+                prev_pos = None
+                for k in range(self.num_moves_limit):
+                    s = self.maze.get_state()
+                    if random.random() <= 0.8:  #move by solution
+                        pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
+                        self.sa.reset()
+                        dir = dir_list[0]
+                    else:                       #move by randomness
+                        if random.random() <= 0.5:
+                            dir = np.random.randint(0, 3)
+                        else:
+                            dir = self.get_best_action(s)
+                    s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
+                    transition = [s, dir, r, s_next, is_terminate]
+                    self.experience_db.add_data(transition)
 
-                s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                transition = [s, dir, r, s_next, is_terminate]
-                self.experience_db.add_data(transition)
-
-                #Store the solution data
-                pos_list, dir_list = self.maze.get_opt_path()
-                if len(pos_list) >= sol_batch_size:
-                    origin_move_count = self.maze.get_move_count()
-                    origin_token_pos = self. maze.get_token_pos()
-                    origin_reward_sum = self.maze.get_reward_sum()
-                    for k in np.random.choice(len(pos_list), sol_batch_size, replace=False):
-                        if k != 0:
-                            self.maze.set_token_pos(pos_list[k-1])
-                        s = self.maze.get_state()
-                        dir = dir_list[k]
-                        s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                        sol_transition = [s, dir, r, s_next, is_terminate]
-                        self.experience_db.add_data(sol_transition)
-                    self.maze.set_move_count(origin_move_count)
-                    self.maze.set_token_pos(origin_token_pos)
-                    self.maze.set_reward_sum(origin_reward_sum)
-
-                if is_terminate or self.maze.get_reward_sum() < self.maze.get_reward_lower_bound():
-                    break
-
-            if i%episode_num == 0:
-                for _ in range(optimization_num):
+                    # Train model
                     inputs, answers = self.experience_db.get_data(self.batch_size, self.gamma)
-                    # history = self.model.fit(inputs, answers, epochs=1, batch_size =self.batch_size, verbose=0)
+                    # history = gl.get_model().fit(inputs, answers, epochs=1, batch_size =optimization_num, verbose=0)
                     train_loss = gl.get_model().train_on_batch(inputs, answers)
 
-            if i % 160 == 0:
+                    if is_terminate:
+                        break
+
+            if i % 10 == 0:
                 sys.stdout.write("Epochs:%d" % (i))
+                winrate_sum += self.test(self.rounds_to_test)
 
             # Decay learning_rate
-            if i%1600 == 0 and i != 0:
+            if i%200 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
+                    if K.get_value(gl.get_model().optimizer.lr) <= 1e-20:
+                        print("Train Finish")
+                        return
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
                 prev_winrate_sum = winrate_sum
                 winrate_sum = 0.
@@ -134,12 +131,12 @@ class DQN(object):
             #     self.decay_learning_rate()
             #     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))
 
-            if i % 160 == 0:
-                winrate_sum += self.test(self.rounds_to_test)
-
-            if self.rounds_to_save_model != 0 and i%self.rounds_to_save_model == 0:
+            if self.rounds_to_save_model != 0 and i % self.rounds_to_save_model == 0:
                 gl.get_model().save(self.saved_model_path)
-            
+                gl.get_model().save(self.saved_model_path[:-3] + "_target" + self.saved_model_path[-3:])
+
+
+
     def test(self, rounds=100, is_count_opt=False):
         win_count = 0.
         average_reward = 0.

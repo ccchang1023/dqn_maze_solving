@@ -50,12 +50,15 @@ def dueldqn_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
     inputS = Input(shape=(state_size,))
 
-    value = Dense(state_size*3)(inputS)
-    value = PReLU()(value)
+    value = Dense(512)(inputS)
+    advantage = Dense(512)(inputS)
+    for _ in range(4):
+        value = Dense(512)(value)
+        value = PReLU()(value)
+        advantage = Dense(512)(advantage)
+        advantage = PReLU()(advantage)
+    #Output
     value = Dense(1, )(value)
-
-    advantage = Dense(state_size*3)(inputS)
-    advantage = PReLU()(advantage)
     advantage = Dense(num_of_actions, )(advantage)
 
     #No activation function before merge
