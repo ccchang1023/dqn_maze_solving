@@ -6,12 +6,12 @@ from dueldqn import DUELDQN
 import time
 
 train_params={
-    'batch_size' : 128,
+    'batch_size' : 32,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
     'learning_rate' : 1e-4,
     'epochs' : 1000000,
-    'num_moves_limit' : 150,
+    'num_moves_limit' : 200,
     'rounds_to_test' : 100,
     # 'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
@@ -43,7 +43,9 @@ def main():
     ddqn = DDQN(**train_params)
     initial_rounds = 1000
     print ("Initial dataset:", initial_rounds, " rounds")
-    ddqn.initial_opt_dataset_by_SA(initial_rounds)
+    ddqn.initial_dataset(initial_rounds)
+
+    # ddqn.initial_opt_dataset_by_SA(initial_rounds)
     print("Start training")
     ddqn.train()
 

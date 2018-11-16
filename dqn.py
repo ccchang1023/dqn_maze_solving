@@ -154,14 +154,11 @@ class DQN(object):
 
         for i in range(rounds):
             self.maze.reset()
-            prev_pos = prev2_pos = self.maze.token_pos.copy()
-
-            # self.maze.reset(start_pos = [0,6]) #fail loop
-            # self.maze.reset(start_pos = [5,5])    #win
-            # self.maze.reset(start_pos=[20,3])   #win, optimal
+            prev2_pos = None
             moves_count = 0.
             for j in range(self.num_moves_limit):
                 s = self.maze.get_state()
+                prev_pos = self.maze.token_pos.copy()
                 # dir = self.get_best_action(s)
                 a = gl.get_model().predict(s)    #With shape (batch, num_actions) -> (1,4)
                 dir = np.argmax(a)
@@ -174,11 +171,9 @@ class DQN(object):
 
                 #prevent from stucking in fail loop
                 if(self.maze.token_pos == prev2_pos):
-                    # print("Loop!")
                     fail_moves += moves_count
                     break
                 prev2_pos = prev_pos.copy()
-                prev_pos = self.maze.token_pos.copy()
 
                 #Get corresponding x_test and y_test
                 if is_terminate:

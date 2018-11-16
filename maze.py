@@ -66,10 +66,10 @@ class Maze(object):
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         self.nrows, self.ncols = np.shape(self.maze)
-        # self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
+        self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
         # self.goal = [nrows-1, ncols-1] #For 10x10 maze
-        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(20) if self.maze[x,y] == 1]
-        self.goal_list = [[x,y+20] for x in range(self.nrows) for y in range(20) if self.maze[x,y+20] == 1]
+        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1]
+        # self.goal_list = [[x,y+20] for x in range(self.nrows) for y in range(20) if self.maze[x,y+20] == 1]
         # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()
         #To create img and animation
@@ -94,15 +94,15 @@ class Maze(object):
         else:
             self.token_pos = start_pos.copy()
 
-        if goal==None:
-            self.goal = random.choice(self.goal_list).copy()
-            # x = np.random.randint(0, 40)
-            # y = np.random.randint(36, 40)
-            # x = np.random.randint(0,10)
-            # y = np.random.randint(8,10)
-            # self.goal = [x, y]
-        else:
-            self.goal = goal.copy()
+        # if goal==None:
+        #     self.goal = random.choice(self.goal_list).copy()
+        #     # x = np.random.randint(0, 40)
+        #     # y = np.random.randint(36, 40)
+        #     # x = np.random.randint(0,10)
+        #     # y = np.random.randint(8,10)
+        #     # self.goal = [x, y]
+        # else:
+        #     self.goal = goal.copy()
 
         # print("Start: ", self.token_pos)
         # print("Goal: ", self.goal)
@@ -155,10 +155,10 @@ class Maze(object):
         #     print("is_visited!")
         #     reward = -0.125
 
-        # else:
-        #     self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+        else:
+            # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
             # self.visited_set.add(tuple(self.token_pos))
-            # reward = -0.01
+            reward = -0.001
 
         self.reward_sum += reward
         
@@ -180,20 +180,21 @@ class Maze(object):
 
         # state2: token_pos + goal_pos + 4dir extension distance()
         s = np.append(self.token_pos, self.goal)
-        return s.reshape(1,-1)
+        x,y = self.token_pos
+        diff = abs(np.subtract(self.goal, self.token_pos))
+        s = np.append(s,diff)
+        t = np.zeros(4,dtype=np.int)
 
-        # x,y = self.token_pos
-        # t = np.zeros(4,dtype=np.int)
-        # while x+t[0]+1 < self.nrows and self.maze[x+t[0]+1][y] != 0:
-        #     t[0] += 1
-        # while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
-        #     t[1] += 1
-        # while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
-        #     t[2] += 1
-        # while y-t[3]-1 >=0 and self.maze[x][y-t[3]-1] != 0:
-        #     t[3] += 1
-        # diff = abs(np.subtract(self.goal, self.token_pos))
-        # return (np.append(s, t)).reshape(1,-1)
+        while y-t[0]-1 >=0 and self.maze[x][y-t[0]-1] != 0:
+            t[0] += 1
+        while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
+            t[1] += 1
+        while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
+            t[2] += 1
+        while x+t[3]+1 < self.nrows and self.maze[x+t[3]+1][y] != 0:
+            t[3] += 1
+
+        return (np.append(s, t)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
         # state = np.append(self.token_pos, self.goal)
