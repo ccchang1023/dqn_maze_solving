@@ -7,6 +7,7 @@ from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers.merge import concatenate
 from keras import backend as K
 from keras.utils import plot_model
+from keras.initializers import glorot_uniform as Xavier
 
 
 def default_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
@@ -50,29 +51,38 @@ def dueldqn_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
     inputS = Input(shape=(state_size,))
 
-    value = Dense(512)(inputS)
-    advantage = Dense(512)(inputS)
+    net = Dense(512, kernel_initializer=Xavier())(inputS)
+    net = PReLU()(net)
     for _ in range(4):
-        value = Dense(512)(value)
-        value = PReLU()(value)
-        advantage = Dense(512)(advantage)
-        advantage = PReLU()(advantage)
+        net = Dense(512, kernel_initializer=Xavier())(net)
+        net = PReLU()(net)
+
     #Output
-    value = Dense(1, )(value)
-    advantage = Dense(num_of_actions, )(advantage)
+    value = Dense(512, kernel_initializer=Xavier())(net)
+    value = PReLU()(value)
+    value = Dense(1, kernel_initializer=Xavier())(value)
+
+    advantage = Dense(512, kernel_initializer=Xavier())(net)
+    advantage = PReLU()(advantage)
+    advantage = Dense(num_of_actions, kernel_initializer=Xavier())(advantage)
 
     #No activation function before merge
-    merge_layer = Lambda(dueldqn_formula, output_shape=(num_of_actions,))([value, advantage])
-    model = Model(inputs=inputS, outputs=merge_layer)
+    net = concatenate([value, advantage])
 
+    merge_layer = Lambda(lambda a: K.expand_dims(a[:,0], -1) + a[:,1:] - K.stop_gradient(K.mean(a[:,1:], keepdims=True)),
+                         output_shape=(num_of_actions,))(net)
+
+    # merge_layer = Lambda(dueldqn_formula, output_shape=(num_of_actions,))([value, advantage])
+
+    model = Model(inputs=inputS, outputs=merge_layer)
     opt = Adam(learning_rate, epsilon=1e-8)
     model.compile(optimizer=opt, loss='mse')
     model.summary()
-    # plot_model(model, show_shapes=True, show_layer_names=True, to_file='model.png')
+    plot_model(model, show_shapes=True, show_layer_names=True, to_file='model.png')
     return model
 
 def dueldqn_formula(x):
-    return x[0]+(x[1] - K.mean(x[1]))
+    return x[0]+(x[1] - K.stop_gradient(K.mean(x[1])))
 
 def conv2d_model(learning_rate=5e-5, state_shape=None, num_of_actions=4):
     batch, rows, cols, channels = state_shape

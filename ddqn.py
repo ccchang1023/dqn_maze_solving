@@ -61,7 +61,7 @@ class DDQN(DQN):
                     # print("Goal:", self.maze.goal)
                     # print("State:", s)
 
-                    if random.random() <= 0.8:  #move by solution
+                    if random.random() <= 0.5:  #move by solution
                         pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
                         self.sa.reset()
                         dir = dir_list[0]
@@ -181,7 +181,7 @@ class DDQN(DQN):
                 winrate_sum += self.test(self.rounds_to_test)
 
             # Decay learning_rate
-            if i%200 == 0 and i != 0:
+            if i%100 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     if K.get_value(gl.get_model().optimizer.lr) <= 1e-20:
