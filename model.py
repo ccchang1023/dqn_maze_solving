@@ -51,20 +51,25 @@ def dueldqn_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
 
     inputS = Input(shape=(state_size,))
 
-    net = Dense(512, kernel_initializer=Xavier())(inputS)
+    net = Dense(512)(inputS)
     net = PReLU()(net)
-    for _ in range(4):
-        net = Dense(512, kernel_initializer=Xavier())(net)
+    net = Dropout(0.2)(net)
+
+    for _ in range(2):
+        net = Dense(512)(net)
         net = PReLU()(net)
+        net = Dropout(0.2)(net)
 
     #Output
-    value = Dense(512, kernel_initializer=Xavier())(net)
+    value = Dense(512)(net)
     value = PReLU()(value)
-    value = Dense(1, kernel_initializer=Xavier())(value)
+    value = Dropout(0.2)(value)
+    value = Dense(1)(value)
 
-    advantage = Dense(512, kernel_initializer=Xavier())(net)
+    advantage = Dense(512)(net)
     advantage = PReLU()(advantage)
-    advantage = Dense(num_of_actions, kernel_initializer=Xavier())(advantage)
+    advantage = Dropout(0.2)(advantage)
+    advantage = Dense(num_of_actions)(advantage)
 
     #No activation function before merge
     net = concatenate([value, advantage])
@@ -81,8 +86,8 @@ def dueldqn_model(learning_rate=1e-5, state_size=10, num_of_actions=4):
     plot_model(model, show_shapes=True, show_layer_names=True, to_file='model.png')
     return model
 
-def dueldqn_formula(x):
-    return x[0]+(x[1] - K.stop_gradient(K.mean(x[1])))
+# def dueldqn_formula(x):
+#     return x[0]+(x[1] - K.stop_gradient(K.mean(x[1])))
 
 def conv2d_model(learning_rate=5e-5, state_shape=None, num_of_actions=4):
     batch, rows, cols, channels = state_shape

@@ -9,7 +9,7 @@ train_params={
     'batch_size' : 32,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-5,
+    'learning_rate' : 1e-4,
     'epochs' : 1000000,
     'num_moves_limit' : 200,
     'rounds_to_test' : 100,
@@ -40,23 +40,23 @@ def main():
     # print("Start training")
     # dqn.train()
 
-    # ddqn = DDQN(**train_params)
-    # initial_rounds = 1000
-    # print ("Initial dataset:", initial_rounds, " rounds")
-    # ddqn.initial_dataset(initial_rounds)
-    # # ddqn.initial_opt_dataset_by_SA(initial_rounds)
-    # print("Start training")
-    # ddqn.train()
+    ddqn = DDQN(**train_params)
+    initial_rounds = 1000
+    print ("Initial dataset:", initial_rounds, " rounds")
+    ddqn.initial_dataset(initial_rounds)
+    # ddqn.initial_opt_dataset_by_SA(initial_rounds)
+    print("Start training")
+    ddqn.train()
 
     # sa = SEARCH_AGENT(**search_params)
     # sa.search()
 
-    duelqn = DUELDQN(**train_params)
-    initial_rounds = 1000
-    print ("Initial dataset:", initial_rounds, " rounds")
-    duelqn.initial_dataset(initial_rounds)
-    print("Start training")
-    duelqn.train()
+    # duelqn = DUELDQN(**train_params)
+    # initial_rounds = 1000
+    # print ("Initial dataset:", initial_rounds, " rounds")
+    # duelqn.initial_dataset(initial_rounds)
+    # print("Start training")
+    # duelqn.train()
 
     # sa = SEARCH_AGENT(**search_params)
     # round = 1
