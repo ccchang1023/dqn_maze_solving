@@ -3,6 +3,7 @@ import os, sys, time, datetime, json, random
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
 
 from enum import Enum
 
@@ -45,11 +46,13 @@ class DIR(Enum):
     LEFT = 0
     UP = 1
     RIGHT = 2
-    DONW = 3
+    DOWN = 3
+    FRONT = 4
+    BACK = 5
 
 
 class Maze(object):
-    def __init__(self, num_of_actions=4, lower_bound=None, load_maze_path=""):
+    def __init__(self, num_of_actions=6, lower_bound=None, load_maze_path=""):
         # if load_maze_path != "":
         #     self.maze = np.loadtxt(load_maze_path)
         # else:
@@ -65,21 +68,19 @@ class Maze(object):
         print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
-        self.nrows, self.ncols = np.shape(self.maze)
-        self.goal = [0 , self.ncols - 1] #For 40x40 robot maze
-        # self.goal = [nrows-1, ncols-1] #For 10x10 maze
-        self.start_list =  [[x,y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x,y] == 1 and [x,y] != self.goal]
+        self.nrows, self.ncols, self.height = np.shape(self.maze)
+        self.goal = [0 , self.ncols-1, self.height - 1] #For 40x40 robot maze
+        self.start_list =  [[x,y,z] for x in range(self.nrows) for y in range(self.ncols) for z in range(self.height) if self.maze[x,y,z] == 1 and [x,y,z] != self.goal]
         # self.goal_list = [[x,y+20] for x in range(self.nrows) for y in range(20) if self.maze[x,y+20] == 1]
         # self.start_point_list = [[x,y] for x in range(nrows) for y in range(ncols) if self.maze[x,y] == 1 and x>= 8]
         self.reset()
         #To create img and animation
         self.fig = plt.figure()
         plt.grid(True)
-        ax = plt.gca()
-        ax.set_xticks(np.arange(0.5, self.nrows, 1))
-        ax.set_yticks(np.arange(0.5, self.ncols, 1))
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
+        self.ax = self.fig.gca(projection='3d')
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_zlabel("z")
 
 
     def reset(self, start_pos=None, goal=None):
@@ -106,12 +107,10 @@ class Maze(object):
 
         # print("Start: ", self.token_pos)
         # print("Goal: ", self.goal)
-
         self.move_count = 0
-        # self.optimal_move_count = DEFAULT_MAZE_ANSWER[self.token_pos[0],self.token_pos[1]]
         self.reward_sum = 0.
-        # self.visited_list = np.zeros(np.shape(self.maze))
-        # self.visited_list[self.token_pos[0], self.token_pos[1]] = 1
+        self.visited_list = np.zeros(np.shape(self.maze))
+        self.visited_list[self.token_pos[0], self.token_pos[1], self.token_pos[2]] = 1
         # self.visited_set = set()
         self.img_list = []
         # plt.cla()     #Cost lots of time
@@ -130,18 +129,22 @@ class Maze(object):
             self.token_pos[0] -= 1
         elif dir == DIR.RIGHT:
             self.token_pos[1] += 1
-        else:
+        elif dir == DIR.DOWN:
             self.token_pos[0] += 1
+        elif dir == DIR.FRONT:
+            self.token_pos[2] += 1
+        else:
+            self.token_pos[2] -= 1
 
-        x,y = self.token_pos
+        x,y,z = self.token_pos
 
-        if not self.is_valid(x,y):
+        if not self.is_valid(x,y,z):
             # print("Invalid!")
             terminate_tag = True
             reward = -1.
             self.token_pos = pos_before_move    
         
-        elif self.is_block(x,y):
+        elif self.is_block(x,y,z):
             # print("Block!")
             terminate_tag = True
             reward = -1.
@@ -156,9 +159,9 @@ class Maze(object):
         #     reward = -0.125
 
         else:
-            # self.visited_list[self.token_pos[0],self.token_pos[1]] = 1
+            self.visited_list[self.token_pos[0],self.token_pos[1],self.token_pos[2]] = 1
             # self.visited_set.add(tuple(self.token_pos))
-            reward = -0.001
+            reward = -0.00001
 
         self.reward_sum += reward
         
@@ -180,20 +183,24 @@ class Maze(object):
 
         # state2: token_pos + goal_pos + 4dir extension distance()
         s = np.append(self.token_pos, self.goal)
-        x,y = self.token_pos
+        x,y,z = self.token_pos
         diff = abs(np.subtract(self.goal, self.token_pos))
         s = np.append(s,diff)
-        t = np.zeros(4,dtype=np.int)
+        # return s.reshape(1,-1)
 
-        while y-t[0]-1 >=0 and self.maze[x][y-t[0]-1] != 0:
+        t = np.zeros(6,dtype=np.int)
+        while y-t[0]-1 >=0 and self.maze[x][y-t[0]-1][z] != 0:
             t[0] += 1
-        while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y] != 0:
+        while x-t[1]-1 >=0 and self.maze[x-t[1]-1][y][z] != 0:
             t[1] += 1
-        while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1] != 0:
+        while y+t[2]+1 < self.ncols and self.maze[x][y+t[2]+1][z] != 0:
             t[2] += 1
-        while x+t[3]+1 < self.nrows and self.maze[x+t[3]+1][y] != 0:
+        while x+t[3]+1 < self.nrows and self.maze[x+t[3]+1][y][z] != 0:
             t[3] += 1
-
+        while z+t[4]+1 < self.height and self.maze[x][y][z+t[4]+1] !=0:
+            t[4] += 1
+        while z-t[5]-1 >=0 and self.maze[x][y][z-t[5]-1]:
+            t[5] += 1
         return (np.append(s, t)).reshape(1,-1)
 
         #state3: token_pos + goal + maze +visited_list
@@ -238,24 +245,24 @@ class Maze(object):
         return diff
         # print("Moves:%d Answer:%d Diff:%d" %(move_count, optimal_move_count, diff))
     
-    def is_block(self, x, y):
-        return self.maze[x,y] == 0
+    def is_block(self, x, y, z):
+        return self.maze[x,y,z] == 0
         
-    def is_valid(self, x, y):
-        nrows, ncols = np.shape(self.maze)
-        return not (x < 0 or x >= nrows or y < 0 or y >= ncols)
+    def is_valid(self, x, y, z):
+        nrows, ncols, height = np.shape(self.maze)
+        return not (x < 0 or x >= nrows or y < 0 or y >= ncols or z < 0 or z >= height)
         
     def is_goal(self):
         return self.token_pos == self.goal
     
-    def is_visited(self, x, y):
-        return (self.visited_list[x,y]==1)
+    def is_visited(self, x, y, z):
+        return (self.visited_list[x,y,z]==1)
         # return tuple(self.token_pos) in self.visited_set
 
     def show_maze(self):
-        x,y = self.token_pos
+        x,y,z = self.token_pos
         m = np.copy(self.maze)
-        m[x][y] = 2
+        m[x][y][z] = 2
         print(m)
 
     def set_start_point(self, dist=1):
@@ -457,20 +464,52 @@ class Maze(object):
         self.reward_sum = r
 
     def create_img(self):
-        nrows, ncols = np.shape(self.maze)
-        canvas = np.copy(self.maze).astype(float)
-        # visited_point = [[x,y] for x in range(nrows) for y in range(ncols) if self.visited_list[x][y]==1]
-        # for x,y in visited_point:
-        #     canvas[x,y] = 0.6
 
-        rat_row, rat_col  = self.token_pos
-        canvas[rat_row, rat_col] = 0.3   # token cell
+        self.fig = plt.figure()
+        self.ax = self.fig.gca(projection='3d')
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_zlabel("z")
 
-        x,y = self.goal
-        canvas[x,y] = 0.9 # goal cell
-        img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
+        # plot cube
+        self.ax = self.fig.gca(projection='3d')
+        self.ax.voxels(np.where(self.maze == 0, 1, 0), edgecolors='gray')
+        # plot token pos
+        x, y, z = self.token_pos
+        plt.plot([x],[y],[z], marker='o', markersize=3, color="red", zorder=3)
+        #plot goal pos
+        x, y, z = self.goal
+        plt.plot([x],[y],[z], marker='o', markersize=3, color="green", zorder=3)
+        # plot visited path
+        nrows, ncols, height = np.shape(self.maze)
+        visited_point = [[x,y,z] for x in range(nrows) for y in range(ncols) for z in range(height) if self.visited_list[x][y][z]==1]
+        for x,y,z in visited_point:
+            plt.plot([x], [y], [z], marker='o', markersize=3, color="black", zorder=3)
+
+        plt.show()
+
+
+
+        # self.ax.voxels(np.where(self.maze == 0, 1, 0), edgecolors='gray')
+        # print(self.maze)
+
+        # plt.savefig("demo.png")
+        return
+
+
+        # nrows, ncols, height = np.shape(self.maze)
+        # canvas = np.copy(self.maze).astype(float)
+        # # visited_point = [[x,y] for x in range(nrows) for y in range(ncols) if self.visited_list[x][y]==1]
+        # # for x,y in visited_point:
+        # #     canvas[x,y] = 0.6
+        # rat_row, rat_col, rat_h  = self.token_pos
+        # canvas[rat_row, rat_col, rat_h] = 0.3   # token cell
+        # x,y,z = self.goal
+        # canvas[x,y,z] = 0.9 # goal cell
+        # img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
+
         self.img_list.append([img])
-        # plt.show()
+        plt.show()
 
     def gen_animate(self, i):
         return self.img_list[i]
@@ -484,31 +523,35 @@ class Maze(object):
 
 
 
-def set_block(maze, center, h, w):
-    # Area will be (center.x+h) * (center.y+w)
-    tmp = np.copy(maze)
-    for i in range(center[0], center[0]+w):
-        for j in range(center[1], center[1]+h):
-            if maze[i][j] == 0:
-                print("Set block failed on :", i ,"  ", j)
-                maze = tmp
-                return False
-            maze[i][j] = 0
+def set_block(maze, center, l,w,h):
+    # block will include (center.x+h) * (center.y+w)
+    # print(center)
+    for i in range(center[0], center[0]+l):
+        for j in range(center[1], center[1]+w):
+            for z in range(center[2], center[2]+h):
+                # print( i, "  ", j, " ", z)
+                if maze[i][j][z] == 0:
+                    print("Set block failed on :", i ,"  ", j, " ",z)
+                    return False
+                maze[i][j][z] = 0
     return True
 
 def generate_robot_map(size=40):
-    m = np.ones([size,size], dtype=int)
-    w1 = h1 = size * 0.3
-    w2 = h2 = size * 0.2
-    set_block(m, (5,4), 6, 9)
-    set_block(m, (15,2), 4, 16)
-    set_block(m, (30,6), 8, 8)
+    m = np.ones([size,size,size], dtype=int)
 
-    set_block(m, (4, 22), 4, 16)
-    set_block(m, (0, 15), 4, 30)
-    set_block(m, (30, 20), 8, 8)
-    set_block(m, (20, 30), 6, 9)
-    set_block(m, (10, 32), 8, 8)
+    set_block(m, (10,0,0), 20, 10, 20)
+    set_block(m, (0,20,20), 15, 15, 5)
+    set_block(m, (0,0,10), 5, 5, 20)
+    set_block(m, (20,20,20), 20, 20, 10)
+    set_block(m, (15,15,0), 25,25,10)
+
+
+    # set_block(m, (10,10,10), 20, 20, 20)
+    # set_block(m, (10,10,10), 20, 20, 20)
+    # set_block(m, (10,10,10), 20, 20, 20)
+    # set_block(m, (10,10,10), 20, 20, 20)
+
+
     return m
 
 def generate_block_map(size=40):

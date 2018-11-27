@@ -5,11 +5,8 @@ from search_agent import SEARCH_AGENT
 from ddqn import DDQN
 import numpy as np
 import matplotlib.pyplot as plt
-from maze import Maze, DEFAULT_MAZE
-# from keras.models import Sequential
-# from keras.layers.core import Dense
-import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+# from mayavi import mlab
 
 
 train_params={
@@ -40,10 +37,58 @@ search_params={
 
 
 def main():
+    # data = (100, 100, 100)
+    # data = np.zeros(data)
+    # data[0:50, 50:70, 0:50] = 1
+    # data[0:50, 0:20, 0:50] = 1
+    # src = mlab.pipeline.scalar_field(data)
+    # outer = mlab.pipeline.iso_surface(src)
+    # mlab.show()
+    # return
+
+
+    ddqn = DDQN(**train_params)
+    # ddqn.maze.create_img()
+    # return
+    # ddqn.maze.set_token_pos([39,0,0])
+    # pos_list, dir_list = ddqn.sa.search(start_pos=ddqn.maze.token_pos, goal=ddqn.maze.goal)
+    # ddqn.sa.reset()
+    # for dir in dir_list:
+    #     _,_,_,_ = ddqn.maze.move(DIR(dir))
+    # ddqn.maze.create_img()
+    # return
+
+    # ddqn.sa.save_solution_db(goal=ddqn.maze.goal)
+    dict = ddqn.sa.load_solution_db('Sol_3d_robot_map.npy')
+    # return
+
+    nrows, ncols, height = np.shape(ddqn.maze.maze)
+    road_list = [[x, y, z] for x in range(nrows) for y in range(ncols) for z in range(height) if
+                 ddqn.maze.maze[x][y][z] == 1]
+    for pos in road_list:
+        ddqn.maze.reset(pos)
+        dir_list = dict[tuple(pos)]
+        for dir in dir_list:
+            s, r, gTag, tTag = ddqn.maze.move(DIR(dir))
+        # print(r)
+        if r != 1:
+            print("Start s:", ddqn.maze.get_token_pos(), " g: ", ddqn.maze.get_goal_pos())
+            input("Bug...")
+    return
+
+    for dir in dir_list:
+        s,r,_,_ = ddqn.maze.move(DIR(dir))
+        print("Curretn pos:",ddqn.maze.get_token_pos())
+        x,y,z = ddqn.maze.get_token_pos()
+        print(ddqn.maze.maze[x][y][z])
+        # print(r, " ", s)
+
+    # ddqn.maze.create_img()
+    return
+
+
     sa = SEARCH_AGENT(**search_params)
     round = 10
-
-    m = Maze()
     start = time.clock()
     for _ in range(round):
         # m.reset()

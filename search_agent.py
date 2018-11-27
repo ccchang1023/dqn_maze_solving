@@ -31,30 +31,29 @@ class SEARCH_AGENT(object):
         # print(search_params)
         # self.algorithm = search_params.get('algorithm', "Astar")
         # self.depth = search_params.get('depth', None)
-        # self.maze = generate_robot_map()
-        self.maze = generate_map(size=10, road_ratio=0.5)
+        self.maze = generate_robot_map(size=40)
         # self.maze = DEFAULT_MAZE
         # self.maze = TEST_MAZE
         # print(self.maze)
-        self.nrows, self.ncols = np.shape(self.maze)
+        self.nrows, self.ncols, self.height = np.shape(self.maze)
         # self.road_list = [[x, y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x, y] == 1]
         self.reset()
 
     def set_maze(self, maze):
         self.maze = maze
-        self.nrows, self.ncols = np.shape(self.maze)
-        self.visited_table = np.zeros([self.nrows, self.ncols], dtype=int)
+        self.nrows, self.ncols, self.height = np.shape(self.maze)
+        self.visited_table = np.zeros([self.nrows, self.ncols, self.height], dtype=int)
         # self.road_list = [[x, y] for x in range(self.nrows) for y in range(self.ncols) if self.maze[x, y] == 1]
 
     def reset(self):
-        self.visited_table = np.zeros([self.nrows, self.ncols], dtype=int)
+        self.visited_table = np.zeros([self.nrows, self.ncols, self.height], dtype=int)
 
 
     def search(self, start_pos=None, goal = None):
 
         root = NODE(start_pos)
-        x,y = start_pos
-        self.visited_table[x][y] = 1
+        x,y,z = start_pos
+        self.visited_table[x][y][z] = 1
         return self.Astar(root,goal)
 
         # if self.algorithm == "dfs":
@@ -70,13 +69,13 @@ class SEARCH_AGENT(object):
 
     def get_successor(self, node, move_count=0):
         successor = []
-        x,y = node.pos
-        next_state = [[x,y-1],[x-1,y],[x,y+1],[x+1,y]]
+        x,y,z = node.pos
+        next_state = [[x,y-1,z],[x-1,y,z],[x,y+1,z],[x+1,y,z],[x,y,z+1],[x,y,z-1]]
         for i in range(len(next_state)):
-            xn,yn = next_state[i]
-            if self.is_valid(xn,yn) and not self.is_block(xn,yn) and self.visited_table[xn,yn]==0:
-                self.visited_table[xn, yn] = 1
-                n = NODE(pos=[xn,yn], move_count=move_count+1, pre_dir=i)
+            xn,yn,zn = next_state[i]
+            if self.is_valid(xn,yn,zn) and not self.is_block(xn,yn,zn) and self.visited_table[xn,yn,zn]==0:
+                self.visited_table[xn, yn, zn] = 1
+                n = NODE(pos=[xn,yn,zn], move_count=move_count+1, pre_dir=i)
                 successor.append(n)
         return np.array(successor)
 
@@ -182,27 +181,70 @@ class SEARCH_AGENT(object):
 
 
     def euclidean_distance(self,p1,p2):
-        return math.sqrt(abs(p1[0]-p2[0])**2 + abs(p1[1]-p2[1])**2)
+        return math.sqrt(abs(p1[0]-p2[0])**2 + abs(p1[1]-p2[1])**2 + abs(p1[2]-p2[2])**2)
 
 
-    def is_block(self, x,y):
-        return True if self.maze[x,y] == 0 else False
+    def is_block(self, x,y,z):
+        return True if self.maze[x,y,z] == 0 else False
 
-    def is_valid(self,x,y):
-        r,c = np.shape(self.maze)
-        return True if x>=0 and x<r and y >=0 and y<c else False
+    def is_valid(self,x,y,z):
+        r,c,h = np.shape(self.maze)
+        return True if x>=0 and x<r and y >=0 and y<c and z>=0 and z<h else False
+
+
+    def save_solution_db(self, goal):
+        nrows, ncols, height = np.shape(self.maze)
+        road_list = [[x, y, z] for x in range(nrows) for y in range(ncols) for z in range(height) if
+                         self.maze[x][y][z] == 1]
+        dict = {}
+        for pos in road_list:
+            self.reset()
+            print("Start from ", pos)
+            pos_list, dir_list = self.search(pos, goal)
+            if dir_list==None:
+                print("Bug: Can't find path")
+            dict[tuple(pos)] = dir_list
+        # Save
+        np.save('Sol_3d_robot_map.npy', dict)
+
+
+    def load_solution_db(self, path):
+        dict = np.load(path).item()
+        if len(dict) == 0:
+            print("Load db failed!!")
+        return dict
+        # nrows, ncols, height = np.shape(self.maze)
+        # road_list = [[x, y, z] for x in range(nrows) for y in range(ncols) for z in range(height) if
+        #              self.maze[x][y][z] == 1]
+        # for pos in road_list:
+        #     print(dict[tuple(pos)])
+        #     if pos[2] == 39:
+        #         break
+
 
 
     def create_img(self, answer):
-        nrows, ncols = np.shape(self.maze)
-        canvas = np.copy(self.maze).astype(float)
-        visited_point = answer
-        for x,y in visited_point:
-            canvas[x,y] = 0.6
-        x,y = self.goal
-        canvas[x,y] = 0.9 # goal cell
-        img = plt.imshow(canvas, interpolation='None', cmap='gray', vmin=0, vmax=1, animated=True)
-        plt.show()
+        #reset
+        self.fig = plt.figure()
+        self.ax = self.fig.gca(projection='3d')
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_zlabel("z")
+
+        # plot cube
+        self.ax = self.fig.gca(projection='3d')
+        self.ax.voxels(np.where(self.maze == 0, 1, 0), edgecolors='gray')
+        # plot token pos
+        x, y, z = self.token_pos
+        plt.plot([x],[y],[z], marker='o', markersize=3, color="red")
+        #plot goal pos
+        x, y, z = self.goal
+        plt.plot([x],[y],[z], marker='o', markersize=3, color="green")
+        # plot visited path
+        nrows, ncols, height = np.shape(self.maze)
+        visited_point = [[x,y,z] for x in range(nrows) for y in range(ncols) for z in range(height) if self.visited_list[x][y][z]==1]
+        for x,y,z in visited_point:
+            plt.plot([x], [y], [z], marker='o', markersize=3, color="gray")
 
 
     # def show_animate(self):

@@ -39,11 +39,14 @@ class DDQN(DQN):
         optimization_num = 40
         cycles = 16
         winrate_sum = prev_winrate_sum = 0.
+        solution_dict = self.sa.load_solution_db('Sol_3d_robot_map.npy')
 
         for i in range(self.epochs):
             # print("Epoch:%d" %(i))
-            tmp_count = 0
+            # ts = time.clock()
+            # move_sum = 0
             for j in range(cycles):
+                # print("Last move count:", self.maze.get_move_count())
                 # print("Epoch:%d Cycle:%d" %(i,j))
                 self.maze.reset()
                 # print("token_pos:", self.maze.token_pos)
@@ -56,15 +59,21 @@ class DDQN(DQN):
                 # print("Normal DQN...")
                 prev_pos = None
                 for k in range(self.num_moves_limit):
+                    # move_sum += 1
                     s = self.maze.get_state()
                     # print("Start:", self.maze.token_pos)
                     # print("Goal:", self.maze.goal)
                     # print("State:", s)
 
                     if random.random() <= 0.5:  #move by solution
-                        pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
-                        self.sa.reset()
+                        # pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
+                        # self.sa.reset()
+
+                        dir_list = solution_dict[tuple(self.maze.token_pos)]
+                        # print(dir_list)
                         dir = dir_list[0]
+                        if dir_list == None:
+                            print("Bug : can't find goal from ", origin_token_pos, " to ", origin_goal)
                         # print("Follow solution:")
                         # print(pos_list)
                         # print(dir_list)
@@ -92,86 +101,8 @@ class DDQN(DQN):
                     if is_terminate:
                         break
 
-                # tmp_count += self.maze.move_count
-                # if j == cycles-1:
-                #     print("Average move count:", tmp_count / cycles)
-                #     self.maze.show_animate()
-
-                # print("transition_list:")
-                # print(transition_list)
-                # a = [transition_list[0][0][0][0],transition_list[0][0][0][1]]
-                # print(a)
-                # print(np.shape(a))
-
-                # ====================Add solution data====================
-                # # print("Add solution data...")
-                # self.maze.reset()
-                # self.maze.set_token_pos(origin_token_pos)
-                # self.maze.set_goal(origin_goal)
-                # pos_list, dir_list = self.sa.search(start_pos=self.maze.token_pos, goal=self.maze.goal)
-                # self.sa.reset()
-                # # print(pos_list)
-                # # print(dir_list)
-                # #complete path
-                # for k in range(len(dir_list)):
-                #     s = self.maze.get_state()
-                #     dir = dir_list[k]
-                #     s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                #     transition = [s, dir, r, s_next, is_terminate]
-                #     # print(transition)
-                #     # self.experience_db.add_data(transition)
-                #     transition_list.append(transition)
-                # #random batch
-                # # num = min(len(pos_list), hindsight_batch_size)
-                # # for k in np.random.choice(len(pos_list), num, replace=False):
-                # #     self.maze.reset()
-                # #     if k == 0:
-                # #         self.maze.set_token_pos(origin_token_pos)
-                # #     else:
-                # #         self.maze.set_token_pos(pos_list[k - 1])
-                # #     self.maze.set_goal(origin_goal)
-                # #     s = self.maze.get_state()
-                # #     dir = dir_list[k]
-                # #     s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                # #     transition = [s, dir, r, s_next, is_terminate]
-                # #     self.experience_db.add_data(transition)
-                #
-                # if r != 1:
-                #     print("Bug:Can't find path",r)
-                #     print("token_pos:", origin_token_pos)
-                #     print("goal:", origin_goal)
-                #     input("Wait..")
-
-
-                # ====================Hindsight experience replay====================
-                # self.maze.reset()
-                # self.maze.set_token_pos(origin_token_pos)
-                # self.maze.set_goal(origin_goal)
-                # for k in range(len(transition_list)-1):
-                #     pos = [transition_list[k][0][0][0],transition_list[k][0][0][1]]  #get token_pos
-                #     num = min(len(transition_list)-k-1,hindsight_batch_size)
-                #     # print("----next trans----")
-                #     for m in np.random.choice(len(transition_list)-k-1, num, replace=False):
-                #         self.maze.reset()
-                #         self.maze.set_token_pos(pos)
-                #         # print("virtual token_pos:", self.maze.token_pos)
-                #
-                #         virtual_goal = [transition_list[k+m+1][0][0][0],transition_list[k+m+1][0][0][1]]   #get goal
-                #         self.maze.set_goal(virtual_goal)
-                #         # print("virtual goal_pos:", self.maze.goal)
-                #         s = self.maze.get_state()
-                #
-                #         dir = transition_list[k][1]   #get dir
-                #         # print("dir:",dir)
-                #
-                #         s_next, r, is_goal, is_terminate = self.maze.move(DIR(dir))
-                #         transition = [s, dir, r, s_next, is_terminate]
-                #         # print("sol transition:", transition)
-                #         self.experience_db.add_data(transition)
-                #     # input("Wait..")
-                #
-                # self.maze.set_token_pos(origin_token_pos)
-                # self.maze.set_goal(origin_goal)
+            # te = time.clock()
+            # print("Cylce average time:", (te-ts)/move_sum)
 
             # Update target model
             self.update_target_model()
@@ -181,7 +112,7 @@ class DDQN(DQN):
                 winrate_sum += self.test(self.rounds_to_test)
 
             # Decay learning_rate
-            if i%200 == 0 and i != 0:
+            if i%100 == 0 and i != 0:
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
                     if K.get_value(gl.get_model().optimizer.lr) <= 1e-20:
