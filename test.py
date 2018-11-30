@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 # from mayavi import mlab
 
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 
 train_params={
     'batch_size' : 8,
@@ -19,7 +23,7 @@ train_params={
     'rounds_to_test' : 100,
     # 'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
-    # 'load_model_path' : "./saved_model/40x40_lr5e-5_98%.h5",
+    'load_model_path' : "./saved_model/3d_ep2400_lr7.8e-7.h5",
     'rounds_to_save_model' : 10000,
     'rounds_to_decay_lr' : 10000,
     'maze_reward_lower_bound' : -0.03*1600,
@@ -37,17 +41,11 @@ search_params={
 
 
 def main():
-    # data = (100, 100, 100)
-    # data = np.zeros(data)
-    # data[0:50, 50:70, 0:50] = 1
-    # data[0:50, 0:20, 0:50] = 1
-    # src = mlab.pipeline.scalar_field(data)
-    # outer = mlab.pipeline.iso_surface(src)
-    # mlab.show()
-    # return
-
 
     ddqn = DDQN(**train_params)
+    ddqn.test(100)
+    return
+
     # ddqn.maze.create_img()
     # return
     # ddqn.maze.set_token_pos([39,0,0])

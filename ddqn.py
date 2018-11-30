@@ -38,7 +38,7 @@ class DDQN(DQN):
         hindsight_batch_size = 4
         optimization_num = 40
         cycles = 16
-        winrate_sum = prev_winrate_sum = 0.
+        max_winrate_sum = winrate_sum = prev_winrate_sum = 0.
         solution_dict = self.sa.load_solution_db('Sol_3d_robot_map.npy')
 
         for i in range(self.epochs):
@@ -112,10 +112,18 @@ class DDQN(DQN):
                 winrate_sum += self.test(self.rounds_to_test)
 
             # Decay learning_rate
-            if i%100 == 0 and i != 0:
+            if i%100 == 0 and i!=0:
+                if winrate_sum > max_winrate_sum:
+                    print("Save model, max average winrate:", winrate_sum/10)
+                    sPath = "./saved_model/3d_ep"+ str(2400+i) + "_wr" + str(winrate_sum/10) + "_lr" + \
+                            str(K.get_value(gl.get_model().optimizer.lr)) + ".h5"
+                    gl.get_model().save(sPath)
+                    # gl.get_targetModel().save(self.saved_model_path[:-3] + "_target" + self.saved_model_path[-3:])
+                    max_winrate_sum = winrate_sum
+
                 if winrate_sum <= prev_winrate_sum:
                     self.decay_learning_rate(decay=0.5)
-                    if K.get_value(gl.get_model().optimizer.lr) <= 1e-20:
+                    if K.get_value(gl.get_model().optimizer.lr) <= 1e-12:
                         print("Train Finish")
                         return
                     print("Decay learning rate to:", K.get_value(gl.get_model().optimizer.lr))

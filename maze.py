@@ -65,7 +65,7 @@ class Maze(object):
         # self.maze = generate_block_map(size=40)
         # np.savetxt('40x40Maze_20181102', self.maze, fmt='%1.0f')
 
-        print(self.maze)
+        # print(self.maze)
         self.num_of_actions = num_of_actions
         self.reward_lower_bound = lower_bound
         self.nrows, self.ncols, self.height = np.shape(self.maze)

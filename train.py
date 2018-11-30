@@ -9,13 +9,13 @@ train_params={
     'batch_size' : 32,
     'gamma' : .95, #discount value when update the qvalue, 0~1
     'epsilon' : .05, #epsilon greedy for choosing best move, (the prob to choice the random move)
-    'learning_rate' : 1e-4,
+    'learning_rate' : 7.8e-7,
     'epochs' : 1000000,
     'num_moves_limit' : 200,
     'rounds_to_test' : 100,
     # 'load_maze_path' : "40x40Maze_98%",
     'saved_model_path' : "./saved_model/test.h5",
-    # 'load_model_path' : "./saved_model/ddqn_10k.h5",
+    'load_model_path' : "./saved_model/3d_ep2400_lr7.8e-7.h5",
     'rounds_to_save_model' : 200,
     'rounds_to_decay_lr' : 200,
     'step_to_update_tModel' : 500,
